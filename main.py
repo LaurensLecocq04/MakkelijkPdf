@@ -17,9 +17,20 @@ from version import get_version_string, get_version_info, check_for_updates
 from settings import SettingsManager
 from settings_window import SettingsWindow
 
-# Voeg poppler pad toe aan PATH
-poppler_path = r"C:\poppler\poppler-23.08.0\Library\bin"
-if poppler_path not in os.environ["PATH"]:
+# Voeg poppler pad toe aan PATH (cross-platform)
+import platform
+if platform.system() == "Windows":
+    poppler_path = r"C:\poppler\poppler-23.08.0\Library\bin"
+elif platform.system() == "Darwin":  # macOS
+    poppler_path = "/opt/homebrew/bin"  # Homebrew ARM
+    if not os.path.exists(poppler_path):
+        poppler_path = "/usr/local/bin"  # Homebrew Intel
+elif platform.system() == "Linux":
+    poppler_path = "/usr/bin"  # System poppler
+else:
+    poppler_path = ""
+
+if poppler_path and poppler_path not in os.environ["PATH"]:
     os.environ["PATH"] = poppler_path + os.pathsep + os.environ["PATH"]
 
 class MakkelijkPdfApp:
@@ -469,7 +480,13 @@ Klik 'Start Conversie' om te beginnen."""
     def open_output_folder(self):
         """Open output map"""
         if self.output_folder and os.path.exists(self.output_folder):
-            os.startfile(self.output_folder)
+            import platform
+            if platform.system() == "Darwin":  # macOS
+                os.system(f"open '{self.output_folder}'")
+            elif platform.system() == "Windows":
+                os.startfile(self.output_folder)
+            else:  # Linux
+                os.system(f"xdg-open '{self.output_folder}'")
         else:
             messagebox.showwarning("Waarschuwing", "Geen output map geselecteerd")
     

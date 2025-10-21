@@ -35,11 +35,21 @@ echo "Controleer poppler installatie..."
 if ! command -v pdftoppm &> /dev/null; then
     echo "WAARSCHUWING: Poppler is niet geïnstalleerd"
     echo "Installeer poppler voor jouw systeem:"
-    echo "  Ubuntu/Debian: sudo apt-get install poppler-utils"
-    echo "  CentOS/RHEL: sudo yum install poppler-utils"
-    echo "  macOS: brew install poppler"
-    echo "  Windows: Download van https://github.com/oschwartz10612/poppler-windows/releases/"
-    echo
+    
+    # Detecteer besturingssysteem
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "  macOS: brew install poppler"
+        echo ""
+        echo "Als je Homebrew niet hebt geïnstalleerd:"
+        echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+        echo "  brew install poppler"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "  Ubuntu/Debian: sudo apt-get install poppler-utils"
+        echo "  CentOS/RHEL: sudo yum install poppler-utils"
+    else
+        echo "  Windows: Download van https://github.com/oschwartz10612/poppler-windows/releases/"
+    fi
+    echo ""
     echo "Na installatie van poppler, herstart je terminal en probeer opnieuw."
 else
     echo "Poppler gevonden - alles OK!"

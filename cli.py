@@ -12,9 +12,20 @@ from pdf2image import convert_from_path
 from PIL import Image
 import time
 
-# Voeg poppler pad toe aan PATH
-poppler_path = r"C:\poppler\poppler-23.08.0\Library\bin"
-if poppler_path not in os.environ["PATH"]:
+# Voeg poppler pad toe aan PATH (cross-platform)
+import platform
+if platform.system() == "Windows":
+    poppler_path = r"C:\poppler\poppler-23.08.0\Library\bin"
+elif platform.system() == "Darwin":  # macOS
+    poppler_path = "/opt/homebrew/bin"  # Homebrew ARM
+    if not os.path.exists(poppler_path):
+        poppler_path = "/usr/local/bin"  # Homebrew Intel
+elif platform.system() == "Linux":
+    poppler_path = "/usr/bin"  # System poppler
+else:
+    poppler_path = ""
+
+if poppler_path and poppler_path not in os.environ["PATH"]:
     os.environ["PATH"] = poppler_path + os.pathsep + os.environ["PATH"]
 
 def convert_pdf_to_images(input_path, output_dir, dpi=300, format='PNG', prefix=None):
