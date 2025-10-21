@@ -879,7 +879,7 @@ Features:
 GitHub: https://github.com/LaurensLecocq04/MakkelijkPdf
 Licentie: MIT
 
-© 2024 Laurens Lecocq"""
+© 2025 Laurens Lecocq"""
         
         messagebox.showinfo("Over MakkelijkPdf", about_text)
             

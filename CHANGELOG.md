@@ -14,7 +14,7 @@ en dit project volgt [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Conversie statistieken (tijd, bestandsgrootte)
 - Verbeterde error handling
 
-## [1.0.0] - 2024-12-19
+## [1.0.0] - 2025-10-21
 
 ### Toegevoegd
 - Initial release van MakkelijkPdf
@@ -48,7 +48,7 @@ en dit project volgt [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `install.sh` - Linux/macOS installatie script
 - `README.md` - Uitgebreide documentatie
 
-## [0.1.0] - 2024-12-19
+## [0.1.0] - 2025-10-21
 
 ### Toegevoegd
 - Project initiatie

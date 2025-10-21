@@ -4,7 +4,7 @@ MakkelijkPdf - Versie Informatie
 
 # Versie informatie
 VERSION = "1.1.0"
-BUILD_DATE = "2024-12-19"
+BUILD_DATE = "2025-10-21"
 BUILD_NUMBER = "002"
 
 # Versie details
@@ -20,7 +20,7 @@ VERSION_INFO = {
 # Changelog
 CHANGELOG = {
     "1.1.0": {
-        "date": "2024-12-19",
+        "date": "2025-10-21",
         "changes": [
             "Enhanced UI met moderne layout",
             "Instellingen systeem geïmplementeerd",
@@ -53,7 +53,7 @@ CHANGELOG = {
         "breaking_changes": []
     },
     "1.0.0": {
-        "date": "2024-12-19",
+        "date": "2025-10-21",
         "changes": [
             "Initial release",
             "GUI interface met CustomTkinter",
