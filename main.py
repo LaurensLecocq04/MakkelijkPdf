@@ -100,14 +100,23 @@ class MakkelijkPdfApp:
         spacer.pack(side="left", fill="x", expand=True)
         
         # Thema switcher
-        theme_button = ctk.CTkButton(
+        current_theme = self.settings.get("general", "theme", "system")
+        # Bepaal icoon op basis van huidige instelling
+        if current_theme == "light":
+            theme_icon = "🌙"  # Toon maan voor dark mode
+        elif current_theme == "dark":
+            theme_icon = "☀️"  # Toon zon voor light mode
+        else:  # system
+            theme_icon = "🌙"  # Default naar dark mode
+        
+        self.theme_button = ctk.CTkButton(
             menubar,
-            text="🌙" if ctk.get_appearance_mode() == "light" else "☀️",
+            text=theme_icon,
             command=self.toggle_theme,
             width=30,
             height=25
         )
-        theme_button.pack(side="right", padx=5, pady=2)
+        self.theme_button.pack(side="right", padx=5, pady=2)
         
     def setup_ui(self):
         """Zet de gebruikersinterface op"""
@@ -241,12 +250,79 @@ class MakkelijkPdfApp:
         
         ctk.CTkLabel(preview_frame, text="Preview", font=ctk.CTkFont(weight="bold")).pack(pady=10)
         
-        # Preview canvas
-        self.preview_canvas = ctk.CTkCanvas(preview_frame, width=200, height=300, bg="gray20")
-        self.preview_canvas.pack(pady=10)
+        # Preview frame met scrollbar
+        self.preview_container = ctk.CTkScrollableFrame(preview_frame, width=200, height=300)
+        self.preview_container.pack(pady=10)
         
-        self.preview_label = ctk.CTkLabel(preview_frame, text="Selecteer een PDF voor preview")
-        self.preview_label.pack(pady=10)
+        # Preview label
+        self.preview_label = ctk.CTkLabel(
+            self.preview_container, 
+            text="Selecteer een PDF voor preview",
+            wraplength=180
+        )
+        self.preview_label.pack(pady=20)
+        
+        # Preview info
+        self.preview_info = ctk.CTkLabel(
+            self.preview_container,
+            text="",
+            font=ctk.CTkFont(size=10)
+        )
+        self.preview_info.pack(pady=5)
+    
+    def update_preview(self):
+        """Update preview met PDF informatie"""
+        if not hasattr(self, 'preview_label'):
+            return
+            
+        if self.input_file and os.path.exists(self.input_file):
+            try:
+                # Probeer PDF informatie te lezen (alleen eerste pagina voor snelheid)
+                pages = convert_from_path(
+                    self.input_file, 
+                    dpi=50, 
+                    first_page=1, 
+                    last_page=1, 
+                    poppler_path=poppler_path
+                )
+                
+                if pages and len(pages) > 0:
+                    page = pages[0]
+                    
+                    # Toon PDF informatie
+                    file_size = os.path.getsize(self.input_file)
+                    file_size_mb = file_size / (1024 * 1024)
+                    
+                    # Probeer totaal aantal pagina's te krijgen
+                    try:
+                        all_pages = convert_from_path(self.input_file, dpi=1, poppler_path=poppler_path)
+                        total_pages = len(all_pages) if all_pages else 1
+                    except:
+                        total_pages = 1
+                    
+                    info_text = f"""📄 PDF Informatie:
+
+Bestand: {os.path.basename(self.input_file)}
+Pagina's: {total_pages} pagina(s)
+Grootte: {file_size_mb:.1f} MB
+Resolutie: {page.width}x{page.height} px
+Modus: {page.mode}
+
+Klik 'Start Conversie' om te beginnen."""
+                    
+                    self.preview_label.configure(text=info_text)
+                    self.preview_info.configure(text="✅ PDF geladen en klaar voor conversie")
+                else:
+                    self.preview_label.configure(text="❌ Kon PDF niet lezen")
+                    self.preview_info.configure(text="Controleer of het een geldig PDF bestand is")
+                    
+            except Exception as e:
+                error_msg = str(e)[:100] + "..." if len(str(e)) > 100 else str(e)
+                self.preview_label.configure(text=f"❌ Fout bij lezen PDF:\n{error_msg}")
+                self.preview_info.configure(text="Probeer een ander PDF bestand")
+        else:
+            self.preview_label.configure(text="Selecteer een PDF voor preview")
+            self.preview_info.configure(text="")
     
     def setup_stats(self, parent):
         """Zet statistieken sectie op"""
@@ -308,10 +384,55 @@ class MakkelijkPdfApp:
     
     def toggle_theme(self):
         """Wissel tussen licht en donker thema"""
-        current = ctk.get_appearance_mode()
-        new_theme = "light" if current == "dark" else "dark"
+        # Haal huidige thema op uit instellingen (betrouwbaarder)
+        current_theme = self.settings.get("general", "theme", "system")
+        
+        # Debug info
+        print(f"Huidige thema uit instellingen: {current_theme}")
+        print(f"Huidige thema uit CTK: {ctk.get_appearance_mode()}")
+        
+        # Bepaal nieuw thema op basis van huidige instelling
+        if current_theme == "light":
+            new_theme = "dark"
+            new_icon = "☀️"
+            print("Switching van light naar dark")
+        elif current_theme == "dark":
+            new_theme = "light"
+            new_icon = "🌙"
+            print("Switching van dark naar light")
+        else:  # system of onbekend
+            new_theme = "dark"
+            new_icon = "☀️"
+            print("Switching van system naar dark")
+        
+        print(f"Nieuw thema: {new_theme}, Nieuw icoon: {new_icon}")
+        
+        # Pas thema toe
         ctk.set_appearance_mode(new_theme)
         self.settings.set("general", "theme", new_theme)
+        
+        # Update knop icoon
+        self.theme_button.configure(text=new_icon)
+        
+        # Toon bevestiging
+        self.status_label.configure(text=f"Thema gewijzigd naar {new_theme}")
+        
+        # Probeer widgets te updaten
+        try:
+            self.root.update()
+            self.root.update_idletasks()
+        except:
+            pass
+        
+        # Toon bericht over herstart
+        messagebox.showinfo(
+            "Thema Gewijzigd", 
+            f"Thema is gewijzigd naar {new_theme}.\n\n"
+            "Voor volledige wijziging:\n"
+            "1. Sluit de applicatie\n"
+            "2. Start opnieuw\n\n"
+            "Of gebruik het Instellingen venster voor meer opties."
+        )
     
     def new_conversion(self):
         """Start nieuwe conversie"""
@@ -321,6 +442,21 @@ class MakkelijkPdfApp:
         self.output_label.configure(text="Geen map geselecteerd", text_color="gray")
         self.progress_bar.set(0)
         self.status_label.configure(text="Klaar voor conversie")
+        
+        # Reset preview
+        if hasattr(self, 'preview_label'):
+            self.preview_label.configure(text="Selecteer een PDF voor preview")
+        if hasattr(self, 'preview_info'):
+            self.preview_info.configure(text="")
+        
+        # Reset statistieken
+        self.conversion_stats = {
+            "start_time": None,
+            "end_time": None,
+            "pages_converted": 0,
+            "total_size": 0,
+            "files_created": []
+        }
         self.update_stats()
     
     def open_output_folder(self):
@@ -368,6 +504,10 @@ class MakkelijkPdfApp:
             self.input_file = file_path
             filename = os.path.basename(file_path)
             self.input_label.configure(text=filename, text_color="white")
+            
+            # Update preview
+            if hasattr(self, 'update_preview'):
+                self.update_preview()
             
     def select_output_folder(self):
         """Selecteer output map"""

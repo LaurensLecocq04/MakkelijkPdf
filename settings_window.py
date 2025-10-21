@@ -340,6 +340,9 @@ class SettingsWindow:
     def on_theme_change(self, theme):
         """Thema wijziging handler"""
         ctk.set_appearance_mode(theme)
+        # Update parent venster ook
+        if hasattr(self.parent, 'settings'):
+            self.parent.settings.set("general", "theme", theme)
         
     def browse_temp_folder(self):
         """Blader naar temp map"""
