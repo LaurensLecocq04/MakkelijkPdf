@@ -28,8 +28,8 @@ class SettingsManager:
                 "auto_open_output": False
             },
             "ui": {
-                "window_width": 700,
-                "window_height": 600,
+                "window_width": 1400,
+                "window_height": 1000,
                 "show_preview": True,
                 "show_stats": True,
                 "compact_mode": False

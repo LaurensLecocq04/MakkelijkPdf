@@ -7,16 +7,16 @@ import os
 import sys
 from pathlib import Path
 import customtkinter as ctk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox
 from pdf2image import convert_from_path
-from PIL import Image, ImageTk
+from PIL import Image
 import threading
 import time
 from datetime import datetime
 from version import get_version_string, get_version_info, check_for_updates
 from settings import SettingsManager
 from settings_window import SettingsWindow
-from languages import get_text, get_available_languages, get_language_name
+from languages import get_text, get_language_name
 
 # Voeg poppler pad toe aan PATH (cross-platform)
 import platform
@@ -53,8 +53,8 @@ class MakkelijkPdfApp:
         self.root.title(f"MakkelijkPdf - PDF Converter v{version_string}")
         
         # Venster grootte uit instellingen
-        width = self.settings.get("ui", "window_width", 1000)
-        height = self.settings.get("ui", "window_height", 800)
+        width = self.settings.get("ui", "window_width", 1400)
+        height = self.settings.get("ui", "window_height", 1000)
         self.root.geometry(f"{width}x{height}")
         
         # Variabelen
@@ -74,45 +74,57 @@ class MakkelijkPdfApp:
         self.settings_window = None
         
         self.setup_ui()
-        self.setup_menu()
         
     def setup_menu(self):
-        """Zet menu systeem op"""
-        # Maak menu bar
-        menubar = ctk.CTkFrame(self.root, height=30)
-        menubar.pack(fill="x", padx=10, pady=(10, 0))
+        """Zet moderne menu systeem op"""
+        # Maak moderne menu bar
+        menubar = ctk.CTkFrame(self.root, height=50, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        menubar.pack(fill="x", padx=30, pady=(0, 20))
+        menubar.pack_propagate(False)
         
         # Bestand menu
         file_button = ctk.CTkButton(
             menubar,
-            text="Bestand",
+            text="📁 Bestand",
             command=self.show_file_menu,
-            width=80,
-            height=25
+            width=100,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=("#3498db", "#2980b9"),
+            hover_color=("#2980b9", "#1f618d")
         )
-        file_button.pack(side="left", padx=5, pady=2)
+        file_button.pack(side="left", padx=10, pady=7)
         self.file_button = file_button
         
         # Instellingen menu
         settings_button = ctk.CTkButton(
             menubar,
-            text="Instellingen",
+            text="⚙️ Instellingen",
             command=self.show_settings,
-            width=80,
-            height=25
+            width=120,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=("#9b59b6", "#8e44ad"),
+            hover_color=("#8e44ad", "#7d3c98")
         )
-        settings_button.pack(side="left", padx=5, pady=2)
+        settings_button.pack(side="left", padx=5, pady=7)
         self.settings_button = settings_button
         
         # Help menu
         help_button = ctk.CTkButton(
             menubar,
-            text="Help",
+            text="❓ Help",
             command=self.show_help_menu,
             width=80,
-            height=25
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color=("#f39c12", "#e67e22"),
+            hover_color=("#e67e22", "#d35400")
         )
-        help_button.pack(side="left", padx=5, pady=2)
+        help_button.pack(side="left", padx=5, pady=7)
         self.help_button = help_button
         
         # Spacer
@@ -133,10 +145,14 @@ class MakkelijkPdfApp:
             menubar,
             text=theme_icon,
             command=self.toggle_theme,
-            width=30,
-            height=25
+            width=40,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=16),
+            fg_color=("#34495e", "#2c3e50"),
+            hover_color=("#2c3e50", "#1a252f")
         )
-        self.theme_button.pack(side="right", padx=5, pady=2)
+        self.theme_button.pack(side="right", padx=5, pady=7)
         
         # Taal wissel knop
         language_icon = "🇬🇧" if self.current_language == "nl" else "🇳🇱"
@@ -144,103 +160,215 @@ class MakkelijkPdfApp:
             menubar,
             text=language_icon,
             command=self.toggle_language,
-            width=30,
-            height=25
+            width=40,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=16),
+            fg_color=("#34495e", "#2c3e50"),
+            hover_color=("#2c3e50", "#1a252f")
         )
-        self.language_button.pack(side="right", padx=5, pady=2)
-        
+        self.language_button.pack(side="right", padx=5, pady=7)
+    
+    def on_window_resize(self, event):
+        """Callback voor venster resize"""
+        if event.widget == self.root:
+            # Update venster grootte in settings
+            width = self.root.winfo_width()
+            height = self.root.winfo_height()
+            self.settings.set("ui", "window_width", width)
+            self.settings.set("ui", "window_height", height)
+    
     def setup_ui(self):
-        """Zet de gebruikersinterface op"""
-        # Hoofdframe
-        main_frame = ctk.CTkFrame(self.root)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        """Zet de moderne gebruikersinterface op"""
+        # Header sectie met moderne styling
+        header_frame = ctk.CTkFrame(self.root, height=140, corner_radius=0, fg_color=("#ffffff", "#2c3e50"))
+        header_frame.pack(fill="x", padx=0, pady=0)
+        header_frame.pack_propagate(False)
         
-        # Titel sectie
-        title_frame = ctk.CTkFrame(main_frame)
-        title_frame.pack(fill="x", pady=(0, 10))
-        
+        # Hoofdtitel met moderne typografie
         title_label = ctk.CTkLabel(
-            title_frame, 
-            text="MakkelijkPdf", 
-            font=ctk.CTkFont(size=24, weight="bold")
+            header_frame,
+            text="MakkelijkPdf",
+            font=ctk.CTkFont(size=36, weight="bold"),
+            text_color=("#2c3e50", "#ecf0f1")
         )
-        title_label.pack(pady=10)
+        title_label.pack(pady=(25, 5))
         self.title_label = title_label
         
+        # Ondertitel met subtiele styling
         subtitle_label = ctk.CTkLabel(
-            title_frame, 
-            text="Converteer PDF bestanden naar afbeeldingen", 
-            font=ctk.CTkFont(size=12)
+            header_frame,
+            text="Professional PDF to Image Converter",
+            font=ctk.CTkFont(size=16),
+            text_color=("#7f8c8d", "#bdc3c7")
         )
-        subtitle_label.pack(pady=(0, 10))
+        subtitle_label.pack(pady=(0, 25))
         self.subtitle_label = subtitle_label
         
-        # Hoofdcontent frame (2 kolommen)
-        content_frame = ctk.CTkFrame(main_frame)
-        content_frame.pack(fill="both", expand=True)
+        # Initialiseer conversie variabelen
+        self.dpi_var = None
+        self.format_var = None
         
-        # Linker kolom - Input en instellingen
-        left_frame = ctk.CTkFrame(content_frame)
-        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 5))
+        # Configureer venster resize callback
+        self.root.bind('<Configure>', self.on_window_resize)
         
-        # Rechter kolom - Preview en statistieken
-        right_frame = ctk.CTkFrame(content_frame)
-        right_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
+        # Setup menu bar
+        self.setup_menu()
         
-        # Input bestand sectie
-        input_frame = ctk.CTkFrame(left_frame)
-        input_frame.pack(fill="x", padx=10, pady=10)
+        # Hoofdcontainer met moderne card layout (vast frame zodat grid goed kan schalen)
+        main_container = ctk.CTkFrame(self.root, corner_radius=25, fg_color=("#ffffff", "#34495e"))
+        main_container.pack(fill="both", expand=True, padx=30, pady=30)
         
-        pdf_label = ctk.CTkLabel(input_frame, text="PDF Bestand:", font=ctk.CTkFont(weight="bold"))
-        pdf_label.pack(anchor="w", padx=10, pady=(10, 5))
+        # Configureer grid voor responsive kolommen (gelijke breedte)
+        main_container.grid_columnconfigure(0, weight=1, uniform="cols", minsize=400)
+        main_container.grid_columnconfigure(1, weight=1, uniform="cols", minsize=400)
+        
+        # Linker kolom - Input en opties (moderne cards, scrollable, responsive)
+        left_column = ctk.CTkScrollableFrame(main_container, corner_radius=20, fg_color=("#f8f9fa", "#2c3e50"))
+        left_column.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
+        
+        # Rechter kolom - Preview en statistieken (moderne cards, scrollable, responsive)
+        right_column = ctk.CTkScrollableFrame(main_container, corner_radius=20, fg_color=("#f8f9fa", "#2c3e50"))
+        right_column.grid(row=0, column=1, sticky="nsew", padx=(15, 0))
+        
+        # Configureer row voor volledige hoogte
+        main_container.grid_rowconfigure(0, weight=1)
+        
+        # Setup secties met moderne styling
+        self.setup_input_section(left_column)
+        self.setup_options_section(left_column)
+        self.setup_actions_section(left_column)
+        self.setup_preview(right_column)
+        self.setup_stats(right_column)
+        
+        # Moderne status bar met gradient effect
+        status_frame = ctk.CTkFrame(self.root, height=60, corner_radius=20, fg_color=("#e8f5e8", "#27ae60"))
+        status_frame.pack(fill="x", padx=30, pady=(0, 30))
+        status_frame.pack_propagate(False)
+        
+        self.status_label = ctk.CTkLabel(
+            status_frame,
+            text="Ready for conversion",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=("#27ae60", "#ffffff")
+        )
+        self.status_label.pack(expand=True)
+    
+    def setup_input_section(self, parent):
+        """Moderne input sectie"""
+        # Input card
+        input_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        input_card.pack(fill="x", padx=20, pady=(20, 15))
+        
+        # Card header
+        header_frame = ctk.CTkFrame(input_card, height=50, corner_radius=10, fg_color=("#3498db", "#2980b9"))
+        header_frame.pack(fill="x", padx=15, pady=15)
+        header_frame.pack_propagate(False)
+        
+        pdf_label = ctk.CTkLabel(
+            header_frame,
+            text="📄 PDF File",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#ffffff"
+        )
+        pdf_label.pack(expand=True)
         self.pdf_label = pdf_label
         
-        self.input_label = ctk.CTkLabel(input_frame, text="Geen bestand geselecteerd", text_color="gray")
-        self.input_label.pack(anchor="w", padx=10, pady=(0, 5))
-        
-        input_button = ctk.CTkButton(
-            input_frame, 
-            text="Selecteer PDF", 
-            command=self.select_input_file
+        # File info
+        self.input_label = ctk.CTkLabel(
+            input_card,
+            text="No file selected",
+            font=ctk.CTkFont(size=14),
+            text_color=("#7f8c8d", "#bdc3c7")
         )
-        input_button.pack(anchor="w", padx=10, pady=(0, 10))
+        self.input_label.pack(pady=(0, 15), padx=15)
+        
+        # Modern button
+        input_button = ctk.CTkButton(
+            input_card,
+            text="Select PDF File",
+            command=self.select_input_file,
+            height=45,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            corner_radius=12,
+            fg_color=("#3498db", "#2980b9"),
+            hover_color=("#2980b9", "#1f618d")
+        )
+        input_button.pack(pady=(0, 15), padx=15, fill="x")
         self.input_button = input_button
         
-        # Output folder sectie
-        output_frame = ctk.CTkFrame(left_frame)
-        output_frame.pack(fill="x", padx=10, pady=10)
+        # Output card
+        output_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        output_card.pack(fill="x", padx=20, pady=(0, 15))
         
-        output_label_title = ctk.CTkLabel(output_frame, text="Output Map:", font=ctk.CTkFont(weight="bold"))
-        output_label_title.pack(anchor="w", padx=10, pady=(10, 5))
+        # Card header
+        output_header = ctk.CTkFrame(output_card, height=50, corner_radius=10, fg_color=("#e74c3c", "#c0392b"))
+        output_header.pack(fill="x", padx=15, pady=15)
+        output_header.pack_propagate(False)
+        
+        output_label_title = ctk.CTkLabel(
+            output_header,
+            text="📁 Output Folder",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#ffffff"
+        )
+        output_label_title.pack(expand=True)
         self.output_label_title = output_label_title
         
-        # Toon standaard Downloads map
+        # Folder info
         downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
-        self.output_label = ctk.CTkLabel(output_frame, text=f"📁 {downloads_path}", text_color="white")
-        self.output_label.pack(anchor="w", padx=10, pady=(0, 5))
-        
-        output_button = ctk.CTkButton(
-            output_frame, 
-            text="Selecteer Output Map", 
-            command=self.select_output_folder
+        self.output_label = ctk.CTkLabel(
+            output_card,
+            text=f"📁 {downloads_path}",
+            font=ctk.CTkFont(size=12),
+            text_color=("#7f8c8d", "#bdc3c7")
         )
-        output_button.pack(anchor="w", padx=10, pady=(0, 10))
+        self.output_label.pack(pady=(0, 15), padx=15)
+        
+        # Modern button
+        output_button = ctk.CTkButton(
+            output_card,
+            text="Select Output Folder",
+            command=self.select_output_folder,
+            height=45,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            corner_radius=12,
+            fg_color=("#e74c3c", "#c0392b"),
+            hover_color=("#c0392b", "#a93226")
+        )
+        output_button.pack(pady=(0, 15), padx=15, fill="x")
         self.output_button = output_button
+    
+    def setup_options_section(self, parent):
+        """Moderne opties sectie"""
+        options_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        options_card.pack(fill="x", padx=20, pady=(0, 15))
         
-        # Conversie opties
-        options_frame = ctk.CTkFrame(left_frame)
-        options_frame.pack(fill="x", padx=10, pady=10)
+        # Card header
+        options_header = ctk.CTkFrame(options_card, height=50, corner_radius=10, fg_color=("#9b59b6", "#8e44ad"))
+        options_header.pack(fill="x", padx=15, pady=15)
+        options_header.pack_propagate(False)
         
-        options_label = ctk.CTkLabel(options_frame, text="Conversie Opties:", font=ctk.CTkFont(weight="bold"))
-        options_label.pack(anchor="w", padx=10, pady=(10, 5))
+        options_label = ctk.CTkLabel(
+            options_header,
+            text="⚙️ Conversion Options",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#ffffff"
+        )
+        options_label.pack(expand=True)
         self.options_label = options_label
         
-        # DPI instelling
-        dpi_frame = ctk.CTkFrame(options_frame)
-        dpi_frame.pack(fill="x", padx=10, pady=5)
+        # DPI section
+        dpi_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        dpi_frame.pack(fill="x", padx=15, pady=(0, 10))
         
-        dpi_label = ctk.CTkLabel(dpi_frame, text="DPI (kwaliteit):")
-        dpi_label.pack(side="left", padx=10, pady=10)
+        dpi_label = ctk.CTkLabel(
+            dpi_frame,
+            text="DPI (Quality):",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=("#2c3e50", "#ecf0f1")
+        )
+        dpi_label.pack(anchor="w", padx=15, pady=(10, 5))
         self.dpi_label = dpi_label
         
         default_dpi = self.settings.get("conversion", "default_dpi", 300)
@@ -249,80 +377,107 @@ class MakkelijkPdfApp:
             dpi_frame,
             variable=self.dpi_var,
             values=["150", "200", "300", "400", "600"],
-            width=100
+            width=200,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14),
+            fg_color=("#ffffff", "#2c3e50"),
+            button_color=("#3498db", "#2980b9"),
+            button_hover_color=("#2980b9", "#1f618d")
         )
-        dpi_menu.pack(side="left", padx=10, pady=10)
+        dpi_menu.pack(anchor="w", padx=15, pady=(0, 15), fill="x")
         self.dpi_menu = dpi_menu
         
-        # Formaat selectie
-        format_frame = ctk.CTkFrame(options_frame)
-        format_frame.pack(fill="x", padx=10, pady=5)
+        # Format section
+        format_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        format_frame.pack(fill="x", padx=15, pady=(0, 15))
         
-        format_label = ctk.CTkLabel(format_frame, text="Output Formaat:")
-        format_label.pack(side="left", padx=10, pady=10)
+        format_label = ctk.CTkLabel(
+            format_frame,
+            text="Output Format:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color=("#2c3e50", "#ecf0f1")
+        )
+        format_label.pack(anchor="w", padx=15, pady=(10, 5))
         self.format_label = format_label
+        
         default_format = self.settings.get("conversion", "default_format", "PNG")
         self.format_var = ctk.StringVar(value=default_format)
         format_menu = ctk.CTkOptionMenu(
-            format_frame, 
+            format_frame,
             variable=self.format_var,
-            values=["PNG", "JPG", "JPEG", "TIFF", "BMP"]
+            values=["PNG", "JPG", "JPEG", "TIFF", "BMP"],
+            width=200,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14),
+            fg_color=("#ffffff", "#2c3e50"),
+            button_color=("#e74c3c", "#c0392b"),
+            button_hover_color=("#c0392b", "#a93226")
         )
-        format_menu.pack(side="left", padx=10, pady=10)
+        format_menu.pack(anchor="w", padx=15, pady=(0, 15), fill="x")
+    
+    def setup_actions_section(self, parent):
+        """Moderne acties sectie"""
+        actions_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        actions_card.pack(fill="x", padx=20, pady=(0, 20))
         
-        # Conversie knop
+        # Main convert button
         self.convert_button = ctk.CTkButton(
-            left_frame, 
-            text="Start Conversie", 
+            actions_card,
+            text="🚀 Start Conversion",
             command=self.start_conversion,
-            height=40,
-            font=ctk.CTkFont(size=16, weight="bold")
+            height=60,
+            font=ctk.CTkFont(size=20, weight="bold"),
+            corner_radius=15,
+            fg_color=("#27ae60", "#229954"),
+            hover_color=("#229954", "#1e8449")
         )
-        self.convert_button.pack(pady=20)
+        self.convert_button.pack(pady=20, padx=20, fill="x")
         
         # Progress bar
-        self.progress_bar = ctk.CTkProgressBar(left_frame)
-        self.progress_bar.pack(fill="x", padx=10, pady=(0, 10))
+        self.progress_bar = ctk.CTkProgressBar(
+            actions_card,
+            height=20,
+            corner_radius=10,
+            fg_color=("#ecf0f1", "#34495e"),
+            progress_color=("#27ae60", "#2ecc71")
+        )
+        self.progress_bar.pack(fill="x", padx=20, pady=(0, 20))
         self.progress_bar.set(0)
-        
-        # Status label
-        self.status_label = ctk.CTkLabel(left_frame, text="Klaar voor conversie")
-        self.status_label.pack(pady=(0, 10))
-        
-        # Preview sectie (rechter kolom)
-        if self.settings.get("ui", "show_preview", True):
-            self.setup_preview(right_frame)
-        
-        # Statistieken sectie
-        if self.settings.get("ui", "show_stats", True):
-            self.setup_stats(right_frame)
     
     def setup_preview(self, parent):
-        """Zet preview sectie op"""
-        preview_frame = ctk.CTkFrame(parent)
-        preview_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        """Moderne preview sectie"""
+        preview_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        preview_card.pack(fill="both", expand=True, padx=20, pady=(20, 15))
         
-        ctk.CTkLabel(preview_frame, text="Preview", font=ctk.CTkFont(weight="bold")).pack(pady=10)
+        # Card header
+        preview_header = ctk.CTkFrame(preview_card, height=50, corner_radius=10, fg_color=("#f39c12", "#e67e22"))
+        preview_header.pack(fill="x", padx=15, pady=15)
+        preview_header.pack_propagate(False)
         
-        # Preview frame met scrollbar
-        self.preview_container = ctk.CTkScrollableFrame(preview_frame, width=200, height=300)
-        self.preview_container.pack(pady=10)
-        
-        # Preview label
-        self.preview_label = ctk.CTkLabel(
-            self.preview_container, 
-            text="Selecteer een PDF voor preview",
-            wraplength=180
+        preview_label = ctk.CTkLabel(
+            preview_header,
+            text="👁️ Preview",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#ffffff"
         )
-        self.preview_label.pack(pady=20)
+        preview_label.pack(expand=True)
+        self.preview_label = preview_label
+        
+        # Preview content
+        self.preview_container = ctk.CTkScrollableFrame(preview_card, corner_radius=10)
+        self.preview_container.pack(fill="both", expand=True, padx=15, pady=(0, 15))
         
         # Preview info
         self.preview_info = ctk.CTkLabel(
             self.preview_container,
-            text="",
-            font=ctk.CTkFont(size=10)
+            text="Select a PDF file to see preview information",
+            font=ctk.CTkFont(size=14),
+            text_color=("#7f8c8d", "#bdc3c7"),
+            wraplength=300
         )
-        self.preview_info.pack(pady=5)
+        self.preview_info.pack(pady=30)
     
     def update_preview(self):
         """Update preview met PDF informatie"""
@@ -379,34 +534,58 @@ Klik 'Start Conversie' om te beginnen."""
             self.preview_info.configure(text="")
     
     def setup_stats(self, parent):
-        """Zet statistieken sectie op"""
-        stats_frame = ctk.CTkFrame(parent)
-        stats_frame.pack(fill="x", padx=10, pady=10)
+        """Moderne statistieken sectie"""
+        stats_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        stats_card.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
-        stats_title = ctk.CTkLabel(stats_frame, text="Statistieken", font=ctk.CTkFont(weight="bold"))
-        stats_title.pack(pady=10)
+        # Card header
+        stats_header = ctk.CTkFrame(stats_card, height=50, corner_radius=10, fg_color=("#16a085", "#138d75"))
+        stats_header.pack(fill="x", padx=15, pady=15)
+        stats_header.pack_propagate(False)
+        
+        stats_title = ctk.CTkLabel(
+            stats_header,
+            text="📊 Statistics",
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#ffffff"
+        )
+        stats_title.pack(expand=True)
         self.stats_title = stats_title
         
-        # Stats labels
+        # Stats content
+        stats_content = ctk.CTkFrame(stats_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        stats_content.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        
+        # Individual stat labels
         self.stats_labels = {}
         stats_info = [
-            ("Pagina's:", "pages"),
-            ("Tijd:", "time"),
-            ("Bestandsgrootte:", "size"),
-            ("Bestanden:", "files")
+            ("pages", "Pages:", "0"),
+            ("time", "Time:", "0s"),
+            ("size", "File Size:", "0 MB"),
+            ("files", "Files:", "0")
         ]
         
-        for label_text, key in stats_info:
-            frame = ctk.CTkFrame(stats_frame)
-            frame.pack(fill="x", padx=10, pady=2)
+        for key, label_text, default_value in stats_info:
+            stat_frame = ctk.CTkFrame(stats_content, corner_radius=8, fg_color=("#ffffff", "#2c3e50"))
+            stat_frame.pack(fill="x", padx=10, pady=8)
             
-            label = ctk.CTkLabel(frame, text=label_text)
-            label.pack(side="left", padx=5)
-            self.stats_labels[key] = label
+            label = ctk.CTkLabel(
+                stat_frame,
+                text=label_text,
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color=("#2c3e50", "#ecf0f1")
+            )
+            label.pack(anchor="w", padx=15, pady=(10, 5))
             
-            value_label = ctk.CTkLabel(frame, text="0")
-            value_label.pack(side="right", padx=5)
-            self.stats_labels[f"{key}_value"] = value_label
+            value_label = ctk.CTkLabel(
+                stat_frame,
+                text=default_value,
+                font=ctk.CTkFont(size=16),
+                text_color=("#27ae60", "#2ecc71")
+            )
+            value_label.pack(anchor="w", padx=15, pady=(0, 10))
+            
+            self.stats_labels[key] = value_label
     
     def show_file_menu(self):
         """Toon bestand menu"""
@@ -470,7 +649,10 @@ Klik 'Start Conversie' om te beginnen."""
         self.theme_button.configure(text=new_icon)
         
         # Toon bevestiging
-        self.status_label.configure(text=f"{get_text('theme', self.current_language)} gewijzigd naar {new_theme}")
+        if self.current_language == "nl":
+            self.status_label.configure(text=f"Thema gewijzigd naar {new_theme}")
+        else:
+            self.status_label.configure(text=f"Theme changed to {new_theme}")
         
         # Forceer volledige UI update
         self.update_theme_colors()
@@ -487,10 +669,10 @@ Klik 'Start Conversie' om te beginnen."""
         # Bepaal nieuwe taal
         if self.current_language == "nl":
             new_language = "en"
-            new_icon = "🇳🇱"
+            new_icon = "🇬🇧"
         else:
             new_language = "nl"
-            new_icon = "🇬🇧"
+            new_icon = "🇳🇱"
         
         # Sla nieuwe taal op
         self.current_language = new_language
@@ -537,23 +719,47 @@ Klik 'Start Conversie' om te beginnen."""
             
             # Update sectie labels
             if hasattr(self, 'pdf_label'):
-                self.pdf_label.configure(text="PDF Bestand:" if self.current_language == "nl" else "PDF File:")
+                if self.current_language == "nl":
+                    self.pdf_label.configure(text="📄 PDF Bestand")
+                else:
+                    self.pdf_label.configure(text="📄 PDF File")
             if hasattr(self, 'output_label_title'):
-                self.output_label_title.configure(text="Output Map:" if self.current_language == "nl" else "Output Folder:")
+                if self.current_language == "nl":
+                    self.output_label_title.configure(text="📁 Output Map")
+                else:
+                    self.output_label_title.configure(text="📁 Output Folder")
             if hasattr(self, 'options_label'):
-                self.options_label.configure(text="Conversie Opties:" if self.current_language == "nl" else "Conversion Options:")
+                if self.current_language == "nl":
+                    self.options_label.configure(text="⚙️ Conversie Opties")
+                else:
+                    self.options_label.configure(text="⚙️ Conversion Options")
             if hasattr(self, 'dpi_label'):
-                self.dpi_label.configure(text="DPI (kwaliteit):" if self.current_language == "nl" else "DPI (quality):")
+                if self.current_language == "nl":
+                    self.dpi_label.configure(text="DPI (Kwaliteit):")
+                else:
+                    self.dpi_label.configure(text="DPI (Quality):")
             if hasattr(self, 'format_label'):
-                self.format_label.configure(text="Output Formaat:" if self.current_language == "nl" else "Output Format:")
+                if self.current_language == "nl":
+                    self.format_label.configure(text="Output Formaat:")
+                else:
+                    self.format_label.configure(text="Output Format:")
             
             # Update knoppen en labels
             if hasattr(self, 'input_button'):
-                self.input_button.configure(text=get_text('select_pdf', self.current_language))
+                if self.current_language == "nl":
+                    self.input_button.configure(text="Selecteer PDF Bestand")
+                else:
+                    self.input_button.configure(text="Select PDF File")
             if hasattr(self, 'output_button'):
-                self.output_button.configure(text=get_text('select_output', self.current_language))
+                if self.current_language == "nl":
+                    self.output_button.configure(text="Selecteer Output Map")
+                else:
+                    self.output_button.configure(text="Select Output Folder")
             if hasattr(self, 'convert_button'):
-                self.convert_button.configure(text=get_text('convert', self.current_language))
+                if self.current_language == "nl":
+                    self.convert_button.configure(text="🚀 Start Conversie")
+                else:
+                    self.convert_button.configure(text="🚀 Start Conversion")
             
             # Update andere knoppen
             if hasattr(self, 'new_conversion_button'):
@@ -561,17 +767,29 @@ Klik 'Start Conversie' om te beginnen."""
             
             # Update menu knoppen
             if hasattr(self, 'file_button'):
-                self.file_button.configure(text="Bestand" if self.current_language == "nl" else "File")
+                if self.current_language == "nl":
+                    self.file_button.configure(text="📁 Bestand")
+                else:
+                    self.file_button.configure(text="📁 File")
             if hasattr(self, 'settings_button'):
-                self.settings_button.configure(text="Instellingen" if self.current_language == "nl" else "Settings")
+                if self.current_language == "nl":
+                    self.settings_button.configure(text="⚙️ Instellingen")
+                else:
+                    self.settings_button.configure(text="⚙️ Settings")
             if hasattr(self, 'help_button'):
-                self.help_button.configure(text="Help" if self.current_language == "nl" else "Help")
+                self.help_button.configure(text="❓ Help")
             
             # Update preview en stats labels
             if hasattr(self, 'preview_label'):
-                self.preview_label.configure(text=get_text('preview', self.current_language))
-            if hasattr(self, 'stats_label'):
-                self.stats_label.configure(text=get_text('statistics', self.current_language))
+                if self.current_language == "nl":
+                    self.preview_label.configure(text="👁️ Preview")
+                else:
+                    self.preview_label.configure(text="👁️ Preview")
+            if hasattr(self, 'stats_title'):
+                if self.current_language == "nl":
+                    self.stats_title.configure(text="📊 Statistieken")
+                else:
+                    self.stats_title.configure(text="📊 Statistics")
             
             # Update statistieken titel en labels
             if hasattr(self, 'stats_title'):
@@ -595,7 +813,10 @@ Klik 'Start Conversie' om te beginnen."""
                 if self.input_file:
                     self.input_label.configure(text=f"📄 {os.path.basename(self.input_file)}")
                 else:
-                    self.input_label.configure(text="Geen bestand geselecteerd" if self.current_language == "nl" else "No file selected")
+                    if self.current_language == "nl":
+                        self.input_label.configure(text="Geen bestand geselecteerd")
+                    else:
+                        self.input_label.configure(text="No file selected")
             
             # Update output label
             if hasattr(self, 'output_label'):
@@ -603,7 +824,10 @@ Klik 'Start Conversie' om te beginnen."""
                 self.output_label.configure(text=f"📁 {downloads_path}")
             
             # Update status
-            self.status_label.configure(text="Klaar voor conversie" if self.current_language == "nl" else "Ready for conversion")
+            if self.current_language == "nl":
+                self.status_label.configure(text="Klaar voor conversie")
+            else:
+                self.status_label.configure(text="Ready for conversion")
             
         except Exception as e:
             print(f"Fout bij updaten UI taal: {e}")
@@ -714,17 +938,26 @@ Klik 'Start Conversie' om te beginnen."""
     def update_stats(self):
         """Update statistieken weergave"""
         if hasattr(self, 'stats_labels'):
-            self.stats_labels["pages"].configure(text=str(self.conversion_stats["pages_converted"]))
+            # Update pages
+            if "pages" in self.stats_labels:
+                self.stats_labels["pages"].configure(text=str(self.conversion_stats["pages_converted"]))
             
-            if self.conversion_stats["start_time"] and self.conversion_stats["end_time"]:
-                duration = self.conversion_stats["end_time"] - self.conversion_stats["start_time"]
-                self.stats_labels["time"].configure(text=f"{duration:.1f}s")
-            else:
-                self.stats_labels["time"].configure(text="0s")
+            # Update time
+            if "time" in self.stats_labels:
+                if self.conversion_stats["start_time"] and self.conversion_stats["end_time"]:
+                    duration = self.conversion_stats["end_time"] - self.conversion_stats["start_time"]
+                    self.stats_labels["time"].configure(text=f"{duration:.1f}s")
+                else:
+                    self.stats_labels["time"].configure(text="0s")
             
-            size_mb = self.conversion_stats["total_size"] / (1024 * 1024)
-            self.stats_labels["size"].configure(text=f"{size_mb:.1f} MB")
-            self.stats_labels["files"].configure(text=str(len(self.conversion_stats["files_created"])))
+            # Update size
+            if "size" in self.stats_labels:
+                size_mb = self.conversion_stats["total_size"] / (1024 * 1024)
+                self.stats_labels["size"].configure(text=f"{size_mb:.1f} MB")
+            
+            # Update files
+            if "files" in self.stats_labels:
+                self.stats_labels["files"].configure(text=str(len(self.conversion_stats["files_created"])))
         
     def select_input_file(self):
         """Selecteer input PDF bestand"""
@@ -736,11 +969,19 @@ Klik 'Start Conversie' om te beginnen."""
         if file_path:
             self.input_file = file_path
             filename = os.path.basename(file_path)
-            self.input_label.configure(text=filename, text_color="white")
+            if hasattr(self, 'input_label'):
+                self.input_label.configure(text=f"📄 {filename}")
             
             # Update preview
             if hasattr(self, 'update_preview'):
                 self.update_preview()
+            
+            # Update status
+            if hasattr(self, 'status_label'):
+                if self.current_language == "nl":
+                    self.status_label.configure(text="PDF bestand geselecteerd")
+                else:
+                    self.status_label.configure(text="PDF file selected")
             
     def select_output_folder(self):
         """Selecteer output map"""
@@ -753,24 +994,38 @@ Klik 'Start Conversie' om te beginnen."""
         
         if folder_path:
             self.output_folder = folder_path
-            self.output_label.configure(text=f"📁 {folder_path}", text_color="white")
+            if hasattr(self, 'output_label'):
+                self.output_label.configure(text=f"📁 {folder_path}")
+            
+            # Update status
+            if hasattr(self, 'status_label'):
+                if self.current_language == "nl":
+                    self.status_label.configure(text="Output map geselecteerd")
+                else:
+                    self.status_label.configure(text="Output folder selected")
             
     def start_conversion(self):
         """Start de conversie in een aparte thread"""
         if not self.input_file:
-            messagebox.showerror("Fout", "Selecteer eerst een PDF bestand!")
+            if self.current_language == "nl":
+                messagebox.showerror("Fout", "Selecteer eerst een PDF bestand!")
+            else:
+                messagebox.showerror("Error", "Please select a PDF file first!")
             return
             
         if not self.output_folder:
-            messagebox.showerror("Fout", "Selecteer eerst een output map!")
+            if self.current_language == "nl":
+                messagebox.showerror("Fout", "Selecteer eerst een output map!")
+            else:
+                messagebox.showerror("Error", "Please select an output folder first!")
             return
             
         # Start conversie in aparte thread
-        thread = threading.Thread(target=self.convert_pdf)
+        thread = threading.Thread(target=self.convert_pdf, args=(self.dpi_var.get() if self.dpi_var else "300", self.format_var.get() if self.format_var else "PNG"))
         thread.daemon = True
         thread.start()
         
-    def convert_pdf(self):
+    def convert_pdf(self, dpi_value="300", format_value="PNG"):
         """Converteer PDF naar afbeeldingen"""
         try:
             # Reset statistieken
@@ -783,14 +1038,20 @@ Klik 'Start Conversie' om te beginnen."""
             }
             
             self.convert_button.configure(state="disabled")
-            self.status_label.configure(text="Conversie gestart...")
+            if self.current_language == "nl":
+                self.status_label.configure(text="Conversie gestart...")
+            else:
+                self.status_label.configure(text="Conversion started...")
             self.progress_bar.set(0)
             
             # Lees PDF
-            self.status_label.configure(text="PDF wordt gelezen...")
+            if self.current_language == "nl":
+                self.status_label.configure(text="PDF wordt gelezen...")
+            else:
+                self.status_label.configure(text="Reading PDF...")
             pages = convert_from_path(
                 self.input_file, 
-                dpi=int(self.dpi_var.get()),
+                dpi=int(dpi_value),
                 first_page=None,
                 last_page=None,
                 poppler_path=poppler_path
@@ -798,12 +1059,15 @@ Klik 'Start Conversie' om te beginnen."""
             
             total_pages = len(pages)
             filename_base = Path(self.input_file).stem
-            output_format = self.format_var.get().lower()
+            output_format = format_value.lower()
             quality = self.settings.get("conversion", "quality", 95)
             
             # Converteer elke pagina
             for i, page in enumerate(pages):
-                self.status_label.configure(text=f"Pagina {i+1} van {total_pages} wordt geconverteerd...")
+                if self.current_language == "nl":
+                    self.status_label.configure(text=f"Pagina {i+1} van {total_pages} wordt geconverteerd...")
+                else:
+                    self.status_label.configure(text=f"Converting page {i+1} of {total_pages}...")
                 
                 # Bepaal output bestandsnaam
                 if total_pages == 1:
@@ -840,17 +1104,27 @@ Klik 'Start Conversie' om te beginnen."""
             self.conversion_stats["end_time"] = time.time()
             self.update_stats()
             
-            self.status_label.configure(text=f"Conversie voltooid! {total_pages} pagina('s) geconverteerd.")
+            if self.current_language == "nl":
+                self.status_label.configure(text=f"Conversie voltooid! {total_pages} pagina('s) geconverteerd.")
+            else:
+                self.status_label.configure(text=f"Conversion complete! {total_pages} page(s) converted.")
             
             # Auto-open output folder als ingesteld
             if self.settings.get("conversion", "auto_open_output", False):
                 self.open_output_folder()
             
-            messagebox.showinfo("Succes", f"Conversie voltooid!\n{total_pages} pagina('s) geconverteerd naar {self.output_folder}")
+            if self.current_language == "nl":
+                messagebox.showinfo("Succes", f"Conversie voltooid!\n{total_pages} pagina('s) geconverteerd naar {self.output_folder}")
+            else:
+                messagebox.showinfo("Success", f"Conversion complete!\n{total_pages} page(s) converted to {self.output_folder}")
             
         except Exception as e:
-            self.status_label.configure(text="Fout opgetreden tijdens conversie")
-            messagebox.showerror("Fout", f"Er is een fout opgetreden:\n{str(e)}")
+            if self.current_language == "nl":
+                self.status_label.configure(text="Fout opgetreden tijdens conversie")
+                messagebox.showerror("Fout", f"Er is een fout opgetreden:\n{str(e)}")
+            else:
+                self.status_label.configure(text="Error occurred during conversion")
+                messagebox.showerror("Error", f"An error occurred:\n{str(e)}")
             
         finally:
             self.convert_button.configure(state="normal")

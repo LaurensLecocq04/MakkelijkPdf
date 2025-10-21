@@ -3,22 +3,51 @@ MakkelijkPdf - Versie Informatie
 """
 
 # Versie informatie
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 BUILD_DATE = "2025-10-21"
-BUILD_NUMBER = "002"
+BUILD_NUMBER = "003"
 
 # Versie details
 VERSION_INFO = {
     "major": 1,
-    "minor": 1,
+    "minor": 2,
     "patch": 0,
     "build": BUILD_NUMBER,
     "date": BUILD_DATE,
-    "codename": "Enhanced"
+    "codename": "Advanced"
 }
 
 # Changelog
 CHANGELOG = {
+    "1.2.0": {
+        "date": "2025-10-21",
+        "changes": [
+            "Volledig vernieuwde moderne UI",
+            "Verbeterde layout met cards en secties",
+            "Gradient achtergronden en moderne kleuren",
+            "Verbeterde typografie en spacing",
+            "Moderne iconen en buttons",
+            "Betere visuele hiërarchie",
+            "Responsive design elementen",
+            "Verbeterde gebruikerservaring"
+        ],
+        "features": [
+            "Moderne card-based layout",
+            "Gradient achtergronden",
+            "Verbeterde kleurenschema",
+            "Moderne typografie",
+            "Betere spacing en padding",
+            "Visuele verbeteringen",
+            "Responsive elementen",
+            "Verbeterde UX"
+        ],
+        "fixes": [
+            "UI consistency verbetering",
+            "Betere visuele feedback",
+            "Verbeterde leesbaarheid"
+        ],
+        "breaking_changes": []
+    },
     "1.1.0": {
         "date": "2025-10-21",
         "changes": [
