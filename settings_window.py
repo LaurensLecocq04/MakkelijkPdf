@@ -133,7 +133,8 @@ class SettingsWindow:
         language_menu = ctk.CTkOptionMenu(
             language_frame,
             variable=self.language_var,
-            values=["nl", "en"]
+            values=["nl", "en"],
+            command=self.on_language_change
         )
         language_menu.pack(side="left", padx=10, pady=10)
         
@@ -346,23 +347,22 @@ class SettingsWindow:
         # Sla alle instellingen op
         self.save_settings()
         
-        # Pas thema toe als het is gewijzigd
-        new_theme = self.theme_var.get()
-        if new_theme != ctk.get_appearance_mode():
-            ctk.set_appearance_mode(new_theme)
-        
         # Sluit venster
         self.window.destroy()
         self.window = None
-        
-        # Roep callback aan als die bestaat
-        if self.on_close_callback:
-            self.on_close_callback()
     
     def on_theme_change(self, theme):
         """Thema wijziging handler"""
         # Alleen opslaan, niet direct toepassen
         self.settings.set("general", "theme", theme)
+        self.settings.save_settings()
+        
+    def on_language_change(self, language):
+        """Taal wijziging handler"""
+        print(f"Language changed to: {language}")
+        # Alleen opslaan, niet direct toepassen
+        self.settings.set("general", "language", language)
+        self.settings.save_settings()
         
     def browse_temp_folder(self):
         """Blader naar temp map"""
@@ -375,8 +375,7 @@ class SettingsWindow:
         if messagebox.askyesno("Reset Instellingen", "Weet je zeker dat je alle instellingen wilt resetten naar standaard?"):
             self.settings.reset_to_defaults()
             self.close_window()
-            self.show()  # Herlaad venster
-            
+    
     def export_settings(self):
         """Exporteer instellingen"""
         file_path = filedialog.asksaveasfilename(
@@ -405,9 +404,18 @@ class SettingsWindow:
                 messagebox.showerror("Fout", "Kon instellingen niet importeren!")
                 
     def save_and_close(self):
-        """Bewaar instellingen en sluit venster"""
+        """Bewaar instellingen en herstart applicatie"""
         self.save_settings()
-        self.close_window()
+        
+        # Sluit instellingen venster
+        self.window.destroy()
+        self.window = None
+        
+        # Herstart applicatie
+        import sys
+        import subprocess
+        subprocess.Popen([sys.executable] + sys.argv)
+        sys.exit()
         
     def save_settings(self):
         """Bewaar alle instellingen"""

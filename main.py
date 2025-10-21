@@ -53,8 +53,8 @@ class MakkelijkPdfApp:
         self.root.title(f"MakkelijkPdf - PDF Converter v{version_string}")
         
         # Venster grootte uit instellingen
-        width = self.settings.get("ui", "window_width", 700)
-        height = self.settings.get("ui", "window_height", 600)
+        width = self.settings.get("ui", "window_width", 1000)
+        height = self.settings.get("ui", "window_height", 800)
         self.root.geometry(f"{width}x{height}")
         
         # Variabelen
@@ -91,6 +91,7 @@ class MakkelijkPdfApp:
             height=25
         )
         file_button.pack(side="left", padx=5, pady=2)
+        self.file_button = file_button
         
         # Instellingen menu
         settings_button = ctk.CTkButton(
@@ -101,6 +102,7 @@ class MakkelijkPdfApp:
             height=25
         )
         settings_button.pack(side="left", padx=5, pady=2)
+        self.settings_button = settings_button
         
         # Help menu
         help_button = ctk.CTkButton(
@@ -111,6 +113,7 @@ class MakkelijkPdfApp:
             height=25
         )
         help_button.pack(side="left", padx=5, pady=2)
+        self.help_button = help_button
         
         # Spacer
         spacer = ctk.CTkLabel(menubar, text="")
@@ -435,47 +438,13 @@ Klik 'Start Conversie' om te beginnen."""
     
     def show_settings(self):
         """Toon instellingen venster"""
-        if self.settings_window is None:
-            self.settings_window = SettingsWindow(self.root, self.settings, self.on_settings_closed)
-        self.settings_window.show()
-    
-    def on_settings_closed(self):
-        """Callback wanneer instellingen venster wordt gesloten"""
-        # Herlaad instellingen
-        self.settings.reload()
-        
-        # Update huidige taal en thema
-        self.current_language = self.settings.get("general", "language", "nl")
-        current_theme = self.settings.get("general", "theme", "system")
-        
-        # Pas thema toe
-        ctk.set_appearance_mode(current_theme)
-        
-        # Update thema knop icoon
-        if hasattr(self, 'theme_button'):
-            if current_theme == "light":
-                self.theme_button.configure(text="🌙")
-            elif current_theme == "dark":
-                self.theme_button.configure(text="☀️")
-            else:  # system
-                self.theme_button.configure(text="🌙")
-        
-        # Update taal knop icoon
-        if hasattr(self, 'language_button'):
-            if self.current_language == "nl":
-                self.language_button.configure(text="🇬🇧")
-            else:
-                self.language_button.configure(text="🇳🇱")
-        
-        # Update venster titel
-        version_string = get_version_string()
-        self.root.title(f"{get_text('app_title', self.current_language)} v{version_string}")
-        
-        # Update status
-        self.status_label.configure(text="Instellingen bijgewerkt")
-        
-        # Reset settings window reference
-        self.settings_window = None
+        try:
+            if self.settings_window is None:
+                self.settings_window = SettingsWindow(self.root, self.settings)
+            self.settings_window.show()
+        except Exception as e:
+            print(f"Fout bij openen instellingen: {e}")
+            messagebox.showerror("Fout", f"Kon instellingen niet openen: {e}")
     
     def toggle_theme(self):
         """Wissel tussen licht en donker thema"""
@@ -589,6 +558,14 @@ Klik 'Start Conversie' om te beginnen."""
             # Update andere knoppen
             if hasattr(self, 'new_conversion_button'):
                 self.new_conversion_button.configure(text=get_text('new_conversion', self.current_language))
+            
+            # Update menu knoppen
+            if hasattr(self, 'file_button'):
+                self.file_button.configure(text="Bestand" if self.current_language == "nl" else "File")
+            if hasattr(self, 'settings_button'):
+                self.settings_button.configure(text="Instellingen" if self.current_language == "nl" else "Settings")
+            if hasattr(self, 'help_button'):
+                self.help_button.configure(text="Help" if self.current_language == "nl" else "Help")
             
             # Update preview en stats labels
             if hasattr(self, 'preview_label'):
