@@ -52,6 +52,16 @@ class MakkelijkPdfApp:
         version_string = get_version_string()
         self.root.title(f"MakkelijkPdf - PDF Converter v{version_string}")
         
+        # Voeg icoontje toe
+        try:
+            if os.path.exists("icon.ico"):
+                self.root.iconbitmap("icon.ico")
+            elif os.path.exists("icon.png"):
+                # Voor platforms die geen ICO ondersteunen
+                self.root.iconphoto(True, ctk.CTkImage(Image.open("icon.png")))
+        except Exception as e:
+            print(f"Kon icoontje niet laden: {e}")
+        
         # Venster grootte uit instellingen
         width = self.settings.get("ui", "window_width", 1400)
         height = self.settings.get("ui", "window_height", 1000)
