@@ -39,6 +39,16 @@ def check_python():
 def install_dependencies():
     """Installeer Python dependencies"""
     print("\n📦 Installeer Python dependencies...")
+    
+    # Upgrade pip eerst
+    print("   📥 Upgrade pip...")
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], 
+                     check=True, capture_output=True)
+        print("   ✅ pip geüpgraded")
+    except subprocess.CalledProcessError as e:
+        print(f"   ⚠️ Pip upgrade gefaald: {e}")
+    
     dependencies = [
         "pdf2image==1.17.0",
         "Pillow==10.2.0", 
@@ -46,15 +56,21 @@ def install_dependencies():
         "customtkinter==5.2.2"
     ]
     
+    failed_deps = []
     for dep in dependencies:
         print(f"   📥 Installeer {dep}...")
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", dep], 
-                         check=True, capture_output=True)
+            result = subprocess.run([sys.executable, "-m", "pip", "install", dep], 
+                                 check=True, capture_output=True, text=True)
             print(f"   ✅ {dep} geïnstalleerd")
         except subprocess.CalledProcessError as e:
-            print(f"   ❌ Fout bij installatie {dep}: {e}")
-            return False
+            print(f"   ❌ Fout bij installatie {dep}")
+            failed_deps.append(dep)
+    
+    if failed_deps:
+        print(f"\n⚠️ {len(failed_deps)} dependencies gefaald: {', '.join(failed_deps)}")
+        print("   Probeer handmatig: pip install pdf2image Pillow customtkinter setuptools")
+        return False
     
     print("✅ Alle dependencies geïnstalleerd!")
     return True
@@ -68,55 +84,85 @@ def install_poppler():
     if system == "Windows":
         print("   📥 Download Poppler voor Windows...")
         try:
+            # Controleer of Poppler al bestaat
+            poppler_path = r"C:\poppler\poppler-23.08.0\Library\bin"
+            if os.path.exists(poppler_path):
+                print("   ✅ Poppler al geïnstalleerd")
+                return True
+            
             # Download Poppler
             poppler_url = "https://github.com/oschwartz10612/poppler-windows/releases/download/v23.08.0-0/Release-23.08.0-0.zip"
+            print("   📥 Downloaden...")
             subprocess.run([
                 "powershell", "-Command", 
                 f"Invoke-WebRequest -Uri '{poppler_url}' -OutFile 'poppler.zip'"
-            ], check=True)
+            ], check=True, timeout=300)
             
             # Extract Poppler
+            print("   📦 Uitpakken...")
             subprocess.run([
                 "powershell", "-Command", 
                 "Expand-Archive -Path 'poppler.zip' -DestinationPath 'C:\\poppler' -Force"
             ], check=True)
             
             # Add to PATH
+            print("   🔗 Toevoegen aan PATH...")
             subprocess.run([
                 "powershell", "-Command", 
                 "[Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\\poppler\\poppler-23.08.0\\Library\\bin', 'User')"
             ], check=True)
             
             # Cleanup
-            os.remove("poppler.zip")
+            if os.path.exists("poppler.zip"):
+                os.remove("poppler.zip")
+            
             print("   ✅ Poppler geïnstalleerd en toegevoegd aan PATH")
+            print("   ⚠️ Herstart je terminal/computer voor PATH wijzigingen")
             return True
             
+        except subprocess.TimeoutExpired:
+            print("   ❌ Download timeout - controleer internetverbinding")
+            return False
         except subprocess.CalledProcessError as e:
             print(f"   ❌ Fout bij Poppler installatie: {e}")
+            print("   💡 Probeer handmatig:")
+            print("      1. Download van: https://github.com/oschwartz10612/poppler-windows/releases/")
+            print("      2. Pak uit naar C:\\poppler")
+            print("      3. Voeg C:\\poppler\\poppler-23.08.0\\Library\\bin toe aan PATH")
+            return False
+        except Exception as e:
+            print(f"   ❌ Onverwachte fout: {e}")
             return False
             
     elif system == "Darwin":  # macOS
         print("   📥 Installeer Poppler via Homebrew...")
         try:
-            subprocess.run(["brew", "install", "poppler"], check=True)
+            # Controleer of brew bestaat
+            subprocess.run(["brew", "--version"], check=True, capture_output=True)
+            
+            # Installeer Poppler
+            subprocess.run(["brew", "install", "poppler"], check=True, capture_output=True)
             print("   ✅ Poppler geïnstalleerd via Homebrew")
             return True
         except subprocess.CalledProcessError:
-            print("   ⚠️ Homebrew niet gevonden. Installeer handmatig:")
-            print("      brew install poppler")
+            print("   ⚠️ Homebrew niet gevonden of installatie gefaald")
+            print("   💡 Installeer handmatig:")
+            print("      1. Installeer Homebrew: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
+            print("      2. Installeer Poppler: brew install poppler")
             return False
             
     elif system == "Linux":
         print("   📥 Installeer Poppler via package manager...")
         try:
             # Probeer apt (Ubuntu/Debian)
-            subprocess.run(["sudo", "apt-get", "update"], check=True)
-            subprocess.run(["sudo", "apt-get", "install", "-y", "poppler-utils"], check=True)
+            subprocess.run(["sudo", "apt-get", "update"], check=True, capture_output=True)
+            subprocess.run(["sudo", "apt-get", "install", "-y", "poppler-utils"], check=True, capture_output=True)
             print("   ✅ Poppler geïnstalleerd via apt")
             return True
         except subprocess.CalledProcessError:
-            print("   ⚠️ Installeer handmatig:")
+            print("   ⚠️ apt installatie gefaald")
+            print("   💡 Probeer handmatig:")
+            print("      sudo apt-get update")
             print("      sudo apt-get install poppler-utils")
             return False
     
@@ -138,7 +184,8 @@ def create_shortcuts():
             powershell_cmd = f"""
             $WshShell = New-Object -comObject WScript.Shell
             $Shortcut = $WshShell.CreateShortcut('{shortcut_path}')
-            $Shortcut.TargetPath = '{current_dir}\\MakkelijkPdf.bat'
+            $Shortcut.TargetPath = 'python'
+            $Shortcut.Arguments = '"{current_dir}\\main.py"'
             $Shortcut.WorkingDirectory = '{current_dir}'
             $Shortcut.Description = 'MakkelijkPdf - PDF Converter'
             $Shortcut.Save()
@@ -155,7 +202,8 @@ def create_shortcuts():
             powershell_cmd = f"""
             $WshShell = New-Object -comObject WScript.Shell
             $Shortcut = $WshShell.CreateShortcut('{start_shortcut}')
-            $Shortcut.TargetPath = '{current_dir}\\MakkelijkPdf.bat'
+            $Shortcut.TargetPath = 'python'
+            $Shortcut.Arguments = '"{current_dir}\\main.py"'
             $Shortcut.WorkingDirectory = '{current_dir}'
             $Shortcut.Description = 'MakkelijkPdf - PDF Converter'
             $Shortcut.Save()
