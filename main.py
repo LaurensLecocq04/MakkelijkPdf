@@ -88,7 +88,7 @@ class MakkelijkPdfApp:
     def setup_menu(self):
         """Zet moderne menu systeem op"""
         # Maak moderne menu bar
-        menubar = ctk.CTkFrame(self.root, height=50, corner_radius=15, fg_color=("#ffffff", "#34495e"))
+        menubar = ctk.CTkFrame(self.root, height=55, corner_radius=30, fg_color=("#ffffff", "#0a0e13"))
         menubar.pack(fill="x", padx=30, pady=(0, 20))
         menubar.pack_propagate(False)
         
@@ -97,14 +97,15 @@ class MakkelijkPdfApp:
             menubar,
             text="📁 Bestand",
             command=self.show_file_menu,
-            width=100,
-            height=35,
-            corner_radius=8,
+            width=110,
+            height=40,
+            corner_radius=12,
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=("#3498db", "#2980b9"),
-            hover_color=("#2980b9", "#1f618d")
+            hover_color=("#2980b9", "#1f618d"),
+            text_color=("#ffffff", "#ffffff")
         )
-        file_button.pack(side="left", padx=10, pady=7)
+        file_button.pack(side="left", padx=10, pady=8)
         self.file_button = file_button
         
         # Instellingen menu
@@ -112,14 +113,15 @@ class MakkelijkPdfApp:
             menubar,
             text="⚙️ Instellingen",
             command=self.show_settings,
-            width=120,
-            height=35,
-            corner_radius=8,
+            width=130,
+            height=40,
+            corner_radius=12,
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=("#9b59b6", "#8e44ad"),
-            hover_color=("#8e44ad", "#7d3c98")
+            hover_color=("#8e44ad", "#7d3c98"),
+            text_color=("#ffffff", "#ffffff")
         )
-        settings_button.pack(side="left", padx=5, pady=7)
+        settings_button.pack(side="left", padx=5, pady=8)
         self.settings_button = settings_button
         
         # Help menu
@@ -127,21 +129,38 @@ class MakkelijkPdfApp:
             menubar,
             text="❓ Help",
             command=self.show_help_menu,
-            width=80,
-            height=35,
-            corner_radius=8,
+            width=90,
+            height=40,
+            corner_radius=12,
             font=ctk.CTkFont(size=14, weight="bold"),
             fg_color=("#f39c12", "#e67e22"),
-            hover_color=("#e67e22", "#d35400")
+            hover_color=("#e67e22", "#d35400"),
+            text_color=("#ffffff", "#ffffff")
         )
-        help_button.pack(side="left", padx=5, pady=7)
+        help_button.pack(side="left", padx=5, pady=8)
         self.help_button = help_button
         
         # Spacer
         spacer = ctk.CTkLabel(menubar, text="")
         spacer.pack(side="left", fill="x", expand=True)
         
-        # Thema switcher
+        # Taal wissel knop (rechts)
+        language_icon = "🇬🇧" if self.current_language == "nl" else "🇳🇱"
+        self.language_button = ctk.CTkButton(
+            menubar,
+            text=language_icon,
+            command=self.toggle_language,
+            width=50,
+            height=40,
+            corner_radius=15,
+            font=ctk.CTkFont(size=20),
+            fg_color=("#ffffff", "#2a3441"),
+            hover_color=("#f0f0f0", "#3a4551"),
+            text_color=("#2c3e50", "#f0f0f0")
+        )
+        self.language_button.pack(side="right", padx=(5, 10), pady=8)
+        
+        # Theme wissel knop (links van taal knop)
         current_theme = self.settings.get("general", "theme", "system")
         # Bepaal icoon op basis van huidige instelling
         if current_theme == "light":
@@ -155,29 +174,15 @@ class MakkelijkPdfApp:
             menubar,
             text=theme_icon,
             command=self.toggle_theme,
-            width=40,
-            height=35,
-            corner_radius=8,
-            font=ctk.CTkFont(size=16),
-            fg_color=("#34495e", "#2c3e50"),
-            hover_color=("#2c3e50", "#1a252f")
+            width=50,
+            height=40,
+            corner_radius=15,
+            font=ctk.CTkFont(size=20),
+            fg_color=("#ffffff", "#2a3441"),
+            hover_color=("#f0f0f0", "#3a4551"),
+            text_color=("#2c3e50", "#f0f0f0")
         )
-        self.theme_button.pack(side="right", padx=5, pady=7)
-        
-        # Taal wissel knop
-        language_icon = "🇬🇧" if self.current_language == "nl" else "🇳🇱"
-        self.language_button = ctk.CTkButton(
-            menubar,
-            text=language_icon,
-            command=self.toggle_language,
-            width=40,
-            height=35,
-            corner_radius=8,
-            font=ctk.CTkFont(size=16),
-            fg_color=("#34495e", "#2c3e50"),
-            hover_color=("#2c3e50", "#1a252f")
-        )
-        self.language_button.pack(side="right", padx=5, pady=7)
+        self.theme_button.pack(side="right", padx=(5, 5), pady=8)
     
     def on_window_resize(self, event):
         """Callback voor venster resize"""
@@ -191,7 +196,7 @@ class MakkelijkPdfApp:
     def setup_ui(self):
         """Zet de moderne gebruikersinterface op"""
         # Header sectie met moderne styling
-        header_frame = ctk.CTkFrame(self.root, height=140, corner_radius=0, fg_color=("#ffffff", "#2c3e50"))
+        header_frame = ctk.CTkFrame(self.root, height=100, corner_radius=0, fg_color=("#ffffff", "#0a0e13"))
         header_frame.pack(fill="x", padx=0, pady=0)
         header_frame.pack_propagate(False)
         
@@ -199,20 +204,20 @@ class MakkelijkPdfApp:
         title_label = ctk.CTkLabel(
             header_frame,
             text="MakkelijkPdf",
-            font=ctk.CTkFont(size=36, weight="bold"),
-            text_color=("#2c3e50", "#ecf0f1")
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color=("#2c3e50", "#f0f0f0")
         )
-        title_label.pack(pady=(25, 5))
+        title_label.pack(pady=(20, 3))
         self.title_label = title_label
         
         # Ondertitel met subtiele styling
         subtitle_label = ctk.CTkLabel(
             header_frame,
             text="Professional PDF to Image Converter",
-            font=ctk.CTkFont(size=16),
-            text_color=("#7f8c8d", "#bdc3c7")
+            font=ctk.CTkFont(size=14),
+            text_color=("#7f8c8d", "#b0b0b0")
         )
-        subtitle_label.pack(pady=(0, 25))
+        subtitle_label.pack(pady=(0, 20))
         self.subtitle_label = subtitle_label
         
         # Initialiseer conversie variabelen
@@ -226,7 +231,7 @@ class MakkelijkPdfApp:
         self.setup_menu()
         
         # Hoofdcontainer met moderne card layout (vast frame zodat grid goed kan schalen)
-        main_container = ctk.CTkFrame(self.root, corner_radius=25, fg_color=("#ffffff", "#34495e"))
+        main_container = ctk.CTkFrame(self.root, corner_radius=30, fg_color=("#ffffff", "#0a0e13"))
         main_container.pack(fill="both", expand=True, padx=30, pady=30)
         
         # Configureer grid voor responsive kolommen (gelijke breedte)
@@ -234,22 +239,29 @@ class MakkelijkPdfApp:
         main_container.grid_columnconfigure(1, weight=1, uniform="cols", minsize=400)
         
         # Linker kolom - Input en opties (moderne cards, scrollable, responsive)
-        left_column = ctk.CTkScrollableFrame(main_container, corner_radius=20, fg_color=("#f8f9fa", "#2c3e50"))
-        left_column.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
+        left_column = ctk.CTkFrame(main_container, corner_radius=30, fg_color=("#f8f9fa", "#0a0e13"))
+        left_column.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         
         # Rechter kolom - Preview en statistieken (moderne cards, scrollable, responsive)
-        right_column = ctk.CTkScrollableFrame(main_container, corner_radius=20, fg_color=("#f8f9fa", "#2c3e50"))
-        right_column.grid(row=0, column=1, sticky="nsew", padx=(15, 0))
+        right_column = ctk.CTkFrame(main_container, corner_radius=30, fg_color=("#f8f9fa", "#0a0e13"))
+        right_column.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
         
         # Configureer row voor volledige hoogte
         main_container.grid_rowconfigure(0, weight=1)
         
+        # Maak scrollable content binnen elke kolom
+        left_scrollable = ctk.CTkScrollableFrame(left_column, corner_radius=0, fg_color="transparent")
+        left_scrollable.pack(fill="both", expand=True, padx=15, pady=15)
+        
+        right_scrollable = ctk.CTkScrollableFrame(right_column, corner_radius=0, fg_color="transparent")
+        right_scrollable.pack(fill="both", expand=True, padx=15, pady=15)
+        
         # Setup secties met moderne styling
-        self.setup_input_section(left_column)
-        self.setup_options_section(left_column)
-        self.setup_actions_section(left_column)
-        self.setup_preview(right_column)
-        self.setup_stats(right_column)
+        self.setup_input_section(left_scrollable)
+        self.setup_options_section(left_scrollable)
+        self.setup_actions_section(left_scrollable)
+        self.setup_preview(right_scrollable)
+        self.setup_stats(right_scrollable)
         
         # Moderne status bar met gradient effect
         status_frame = ctk.CTkFrame(self.root, height=60, corner_radius=20, fg_color=("#e8f5e8", "#27ae60"))
@@ -267,8 +279,8 @@ class MakkelijkPdfApp:
     def setup_input_section(self, parent):
         """Moderne input sectie"""
         # Input card
-        input_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        input_card.pack(fill="x", padx=20, pady=(20, 15))
+        input_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        input_card.pack(fill="x", padx=15, pady=(15, 10))
         
         # Card header
         header_frame = ctk.CTkFrame(input_card, height=50, corner_radius=10, fg_color=("#3498db", "#2980b9"))
@@ -308,8 +320,8 @@ class MakkelijkPdfApp:
         self.input_button = input_button
         
         # Output card
-        output_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        output_card.pack(fill="x", padx=20, pady=(0, 15))
+        output_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        output_card.pack(fill="x", padx=15, pady=(0, 10))
         
         # Card header
         output_header = ctk.CTkFrame(output_card, height=50, corner_radius=10, fg_color=("#e74c3c", "#c0392b"))
@@ -351,8 +363,8 @@ class MakkelijkPdfApp:
     
     def setup_options_section(self, parent):
         """Moderne opties sectie"""
-        options_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        options_card.pack(fill="x", padx=20, pady=(0, 15))
+        options_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        options_card.pack(fill="x", padx=15, pady=(0, 10))
         
         # Card header
         options_header = ctk.CTkFrame(options_card, height=50, corner_radius=10, fg_color=("#9b59b6", "#8e44ad"))
@@ -369,14 +381,14 @@ class MakkelijkPdfApp:
         self.options_label = options_label
         
         # DPI section
-        dpi_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        dpi_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#2a3441"))
         dpi_frame.pack(fill="x", padx=15, pady=(0, 10))
         
         dpi_label = ctk.CTkLabel(
             dpi_frame,
             text="DPI (Quality):",
             font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=("#2c3e50", "#ecf0f1")
+            text_color=("#2c3e50", "#f0f0f0")
         )
         dpi_label.pack(anchor="w", padx=15, pady=(10, 5))
         self.dpi_label = dpi_label
@@ -391,7 +403,7 @@ class MakkelijkPdfApp:
             height=35,
             corner_radius=8,
             font=ctk.CTkFont(size=14),
-            fg_color=("#ffffff", "#2c3e50"),
+            fg_color=("#ffffff", "#2a3441"),
             button_color=("#3498db", "#2980b9"),
             button_hover_color=("#2980b9", "#1f618d")
         )
@@ -399,14 +411,14 @@ class MakkelijkPdfApp:
         self.dpi_menu = dpi_menu
         
         # Format section
-        format_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        format_frame = ctk.CTkFrame(options_card, corner_radius=10, fg_color=("#ecf0f1", "#2a3441"))
         format_frame.pack(fill="x", padx=15, pady=(0, 15))
         
         format_label = ctk.CTkLabel(
             format_frame,
             text="Output Format:",
             font=ctk.CTkFont(size=14, weight="bold"),
-            text_color=("#2c3e50", "#ecf0f1")
+            text_color=("#2c3e50", "#f0f0f0")
         )
         format_label.pack(anchor="w", padx=15, pady=(10, 5))
         self.format_label = format_label
@@ -421,7 +433,7 @@ class MakkelijkPdfApp:
             height=35,
             corner_radius=8,
             font=ctk.CTkFont(size=14),
-            fg_color=("#ffffff", "#2c3e50"),
+            fg_color=("#ffffff", "#2a3441"),
             button_color=("#e74c3c", "#c0392b"),
             button_hover_color=("#c0392b", "#a93226")
         )
@@ -429,8 +441,8 @@ class MakkelijkPdfApp:
     
     def setup_actions_section(self, parent):
         """Moderne acties sectie"""
-        actions_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        actions_card.pack(fill="x", padx=20, pady=(0, 20))
+        actions_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        actions_card.pack(fill="x", padx=15, pady=(0, 15))
         
         # Main convert button
         self.convert_button = ctk.CTkButton(
@@ -450,7 +462,7 @@ class MakkelijkPdfApp:
             actions_card,
             height=20,
             corner_radius=10,
-            fg_color=("#ecf0f1", "#34495e"),
+            fg_color=("#ecf0f1", "#2a3441"),
             progress_color=("#27ae60", "#2ecc71")
         )
         self.progress_bar.pack(fill="x", padx=20, pady=(0, 20))
@@ -458,8 +470,8 @@ class MakkelijkPdfApp:
     
     def setup_preview(self, parent):
         """Moderne preview sectie"""
-        preview_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        preview_card.pack(fill="both", expand=True, padx=20, pady=(20, 15))
+        preview_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        preview_card.pack(fill="both", expand=True, padx=15, pady=(15, 10))
         
         # Card header
         preview_header = ctk.CTkFrame(preview_card, height=50, corner_radius=10, fg_color=("#f39c12", "#e67e22"))
@@ -545,8 +557,8 @@ Klik 'Start Conversie' om te beginnen."""
     
     def setup_stats(self, parent):
         """Moderne statistieken sectie"""
-        stats_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#34495e"))
-        stats_card.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        stats_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        stats_card.pack(fill="both", expand=True, padx=15, pady=(0, 15))
         
         # Card header
         stats_header = ctk.CTkFrame(stats_card, height=50, corner_radius=10, fg_color=("#16a085", "#138d75"))
@@ -563,7 +575,7 @@ Klik 'Start Conversie' om te beginnen."""
         self.stats_title = stats_title
         
         # Stats content
-        stats_content = ctk.CTkFrame(stats_card, corner_radius=10, fg_color=("#ecf0f1", "#34495e"))
+        stats_content = ctk.CTkFrame(stats_card, corner_radius=10, fg_color=("#ecf0f1", "#4a4a4a"))
         stats_content.pack(fill="both", expand=True, padx=15, pady=(0, 15))
         
         # Individual stat labels
@@ -576,14 +588,14 @@ Klik 'Start Conversie' om te beginnen."""
         ]
         
         for key, label_text, default_value in stats_info:
-            stat_frame = ctk.CTkFrame(stats_content, corner_radius=8, fg_color=("#ffffff", "#2c3e50"))
+            stat_frame = ctk.CTkFrame(stats_content, corner_radius=8, fg_color=("#ffffff", "#2a2a2a"))
             stat_frame.pack(fill="x", padx=10, pady=8)
             
             label = ctk.CTkLabel(
                 stat_frame,
                 text=label_text,
                 font=ctk.CTkFont(size=14, weight="bold"),
-                text_color=("#2c3e50", "#ecf0f1")
+                text_color=("#2c3e50", "#f0f0f0")
             )
             label.pack(anchor="w", padx=15, pady=(10, 5))
             
