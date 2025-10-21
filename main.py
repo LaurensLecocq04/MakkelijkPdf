@@ -528,20 +528,20 @@ Resolutie: {page.width}x{page.height} px
 Modus: {page.mode}
 
 Klik 'Start Conversie' om te beginnen."""
-                    
-                    self.preview_label.configure(text=info_text)
-                    self.preview_info.configure(text="✅ PDF geladen en klaar voor conversie")
+
+                    self.preview_info.configure(text=info_text)
+                    self.preview_label.configure(text="👁️ Preview")
                 else:
-                    self.preview_label.configure(text="❌ Kon PDF niet lezen")
-                    self.preview_info.configure(text="Controleer of het een geldig PDF bestand is")
+                    self.preview_info.configure(text="❌ Kon PDF niet lezen\nControleer of het een geldig PDF bestand is")
+                    self.preview_label.configure(text="👁️ Preview")
                     
             except Exception as e:
                 error_msg = str(e)[:100] + "..." if len(str(e)) > 100 else str(e)
-                self.preview_label.configure(text=f"❌ Fout bij lezen PDF:\n{error_msg}")
-                self.preview_info.configure(text="Probeer een ander PDF bestand")
+                self.preview_info.configure(text=f"❌ Fout bij lezen PDF:\n{error_msg}\n\nProbeer een ander PDF bestand")
+                self.preview_label.configure(text="👁️ Preview")
         else:
-            self.preview_label.configure(text="Selecteer een PDF voor preview")
-            self.preview_info.configure(text="")
+            self.preview_info.configure(text="Selecteer een PDF voor preview")
+            self.preview_label.configure(text="👁️ Preview")
     
     def setup_stats(self, parent):
         """Moderne statistieken sectie"""
@@ -905,10 +905,10 @@ Klik 'Start Conversie' om te beginnen."""
         self.status_label.configure(text="Klaar voor conversie")
         
         # Reset preview
-        if hasattr(self, 'preview_label'):
-            self.preview_label.configure(text="Selecteer een PDF voor preview")
         if hasattr(self, 'preview_info'):
-            self.preview_info.configure(text="")
+            self.preview_info.configure(text="Selecteer een PDF voor preview")
+        if hasattr(self, 'preview_label'):
+            self.preview_label.configure(text="👁️ Preview")
         
         # Reset statistieken
         self.conversion_stats = {
