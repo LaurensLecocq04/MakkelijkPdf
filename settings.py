@@ -17,7 +17,7 @@ class SettingsManager:
                 "auto_update_check": True,
                 "remember_last_folder": True,
                 "last_input_folder": "",
-                "last_output_folder": ""
+                "last_output_folder": os.path.join(os.path.expanduser("~"), "Downloads")
             },
             "conversion": {
                 "default_dpi": 300,

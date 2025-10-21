@@ -44,7 +44,9 @@ class MakkelijkPdfApp:
         
         # Variabelen
         self.input_file = None
-        self.output_folder = None
+        # Standaard output map naar Downloads
+        default_output = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.output_folder = default_output
         self.conversion_stats = {
             "start_time": None,
             "end_time": None,
@@ -176,7 +178,9 @@ class MakkelijkPdfApp:
         
         ctk.CTkLabel(output_frame, text="Output Map:", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=(10, 5))
         
-        self.output_label = ctk.CTkLabel(output_frame, text="Geen map geselecteerd", text_color="gray")
+        # Toon standaard Downloads map
+        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.output_label = ctk.CTkLabel(output_frame, text=f"📁 {downloads_path}", text_color="white")
         self.output_label.pack(anchor="w", padx=10, pady=(0, 5))
         
         output_button = ctk.CTkButton(
@@ -437,9 +441,12 @@ Klik 'Start Conversie' om te beginnen."""
     def new_conversion(self):
         """Start nieuwe conversie"""
         self.input_file = None
-        self.output_folder = None
+        # Behoud Downloads als standaard output map
+        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.output_folder = downloads_path
+        
         self.input_label.configure(text="Geen bestand geselecteerd", text_color="gray")
-        self.output_label.configure(text="Geen map geselecteerd", text_color="gray")
+        self.output_label.configure(text=f"📁 {downloads_path}", text_color="white")
         self.progress_bar.set(0)
         self.status_label.configure(text="Klaar voor conversie")
         
@@ -511,11 +518,16 @@ Klik 'Start Conversie' om te beginnen."""
             
     def select_output_folder(self):
         """Selecteer output map"""
-        folder_path = filedialog.askdirectory(title="Selecteer output map")
+        # Start in Downloads map als standaard
+        initial_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+        folder_path = filedialog.askdirectory(
+            title="Selecteer output map",
+            initialdir=initial_dir
+        )
         
         if folder_path:
             self.output_folder = folder_path
-            self.output_label.configure(text=folder_path, text_color="white")
+            self.output_label.configure(text=f"📁 {folder_path}", text_color="white")
             
     def start_conversion(self):
         """Start de conversie in een aparte thread"""
