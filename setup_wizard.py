@@ -53,7 +53,8 @@ def install_dependencies():
         "pdf2image==1.17.0",
         "Pillow==10.2.0", 
         "setuptools==69.5.1",
-        "customtkinter==5.2.2"
+        "customtkinter==5.2.2",
+        "PyPDF2==3.0.1"
     ]
     
     failed_deps = []

@@ -17,6 +17,7 @@ from version import get_version_string, get_version_info, check_for_updates
 from settings import SettingsManager
 from settings_window import SettingsWindow
 from languages import get_text, get_language_name
+import PyPDF2
 
 # Voeg poppler pad toe aan PATH (cross-platform)
 import platform
@@ -223,6 +224,7 @@ class MakkelijkPdfApp:
         # Initialiseer conversie variabelen
         self.dpi_var = None
         self.format_var = None
+        self.conversion_mode = "pdf_to_image"  # pdf_to_image, image_to_pdf, pdf_merge
         
         # Configureer venster resize callback
         self.root.bind('<Configure>', self.on_window_resize)
@@ -257,6 +259,7 @@ class MakkelijkPdfApp:
         right_scrollable.pack(fill="both", expand=True, padx=15, pady=15)
         
         # Setup secties met moderne styling
+        self.setup_conversion_mode(left_scrollable)
         self.setup_input_section(left_scrollable)
         self.setup_options_section(left_scrollable)
         self.setup_actions_section(left_scrollable)
@@ -275,6 +278,158 @@ class MakkelijkPdfApp:
             text_color=("#27ae60", "#ffffff")
         )
         self.status_label.pack(expand=True)
+        
+        # Set default conversion mode after all UI is created
+        # self.set_conversion_mode("pdf_to_image")  # Disabled to prevent crashes
+    
+    def setup_conversion_mode(self, parent):
+        """Conversie mode selectie"""
+        mode_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
+        mode_card.pack(fill="x", padx=15, pady=(15, 10))
+        
+        # Card header
+        mode_header = ctk.CTkFrame(mode_card, height=50, corner_radius=10, fg_color=("#e67e22", "#d35400"))
+        mode_header.pack(fill="x", padx=15, pady=15)
+        mode_header.pack_propagate(False)
+        
+        mode_label = ctk.CTkLabel(
+            mode_header,
+            text="🔄 Conversie Mode",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=("#ffffff", "#ffffff")
+        )
+        mode_label.pack(expand=True)
+        self.mode_label = mode_label
+        
+        # Mode selection buttons - Verbeterde layout
+        button_frame = ctk.CTkFrame(mode_card, corner_radius=10, fg_color=("#ecf0f1", "#2a3441"))
+        button_frame.pack(fill="x", padx=15, pady=(0, 15))
+        
+        # Configureer grid voor betere layout
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
+        button_frame.grid_columnconfigure(2, weight=1)
+        
+        # PDF naar Afbeelding knop
+        self.pdf_to_image_btn = ctk.CTkButton(
+            button_frame,
+            text="📄 PDF → Afbeelding\nConverteer PDF naar foto's",
+            command=lambda: self.set_conversion_mode("pdf_to_image"),
+            height=60,
+            corner_radius=12,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=("#3498db", "#2980b9"),
+            hover_color=("#2980b9", "#1f618d"),
+            text_color=("#ffffff", "#ffffff")
+        )
+        self.pdf_to_image_btn.grid(row=0, column=0, padx=8, pady=10, sticky="ew")
+        
+        # Afbeelding naar PDF knop
+        self.image_to_pdf_btn = ctk.CTkButton(
+            button_frame,
+            text="🖼️ Afbeelding → PDF\nMaak PDF van foto's",
+            command=lambda: self.set_conversion_mode("image_to_pdf"),
+            height=60,
+            corner_radius=12,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=("#9b59b6", "#8e44ad"),
+            hover_color=("#8e44ad", "#7d3c98"),
+            text_color=("#ffffff", "#ffffff")
+        )
+        self.image_to_pdf_btn.grid(row=0, column=1, padx=8, pady=10, sticky="ew")
+        
+        # PDF Samenvoegen knop
+        self.pdf_merge_btn = ctk.CTkButton(
+            button_frame,
+            text="📚 PDF Samenvoegen\nVoeg PDF's samen",
+            command=lambda: self.set_conversion_mode("pdf_merge"),
+            height=60,
+            corner_radius=12,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=("#e74c3c", "#c0392b"),
+            hover_color=("#c0392b", "#a93226"),
+            text_color=("#ffffff", "#ffffff")
+        )
+        self.pdf_merge_btn.grid(row=0, column=2, padx=8, pady=10, sticky="ew")
+        
+        # Store mode buttons for later reference
+        self.mode_buttons = {
+            "pdf_to_image": self.pdf_to_image_btn,
+            "image_to_pdf": self.image_to_pdf_btn,
+            "pdf_merge": self.pdf_merge_btn
+        }
+        
+        # Set default mode (only colors, no button text updates yet)
+        self.conversion_mode = "pdf_to_image"
+        self.pdf_to_image_btn.configure(fg_color=("#3498db", "#2980b9"), text_color=("#ffffff", "#ffffff"))
+    
+    def set_conversion_mode(self, mode):
+        """Zet conversie mode en update UI"""
+        self.conversion_mode = mode
+        
+        # Reset button colors
+        self.pdf_to_image_btn.configure(fg_color=("#ecf0f1", "#2a3441"), text_color=("#2c3e50", "#f0f0f0"))
+        self.image_to_pdf_btn.configure(fg_color=("#ecf0f1", "#2a3441"), text_color=("#2c3e50", "#f0f0f0"))
+        self.pdf_merge_btn.configure(fg_color=("#ecf0f1", "#2a3441"), text_color=("#2c3e50", "#f0f0f0"))
+        
+        # Highlight selected mode
+        if mode == "pdf_to_image":
+            self.pdf_to_image_btn.configure(fg_color=("#3498db", "#2980b9"), text_color=("#ffffff", "#ffffff"))
+        elif mode == "image_to_pdf":
+            self.image_to_pdf_btn.configure(fg_color=("#9b59b6", "#8e44ad"), text_color=("#ffffff", "#ffffff"))
+        elif mode == "pdf_merge":
+            self.pdf_merge_btn.configure(fg_color=("#e74c3c", "#c0392b"), text_color=("#ffffff", "#ffffff"))
+        
+        # Update button texts if they exist - Gebruik huidige taal
+        if hasattr(self, 'input_button'):
+            if mode == "pdf_to_image":
+                if self.current_language == "nl":
+                    self.input_button.configure(text="📄 Klik hier om PDF te selecteren\nof sleep PDF hierheen")
+                else:
+                    self.input_button.configure(text="📄 Click here to select PDF\nor drag PDF here")
+            elif mode == "image_to_pdf":
+                if self.current_language == "nl":
+                    self.input_button.configure(text="🖼️ Klik hier om foto's te selecteren\nSelecteer meerdere afbeeldingen")
+                else:
+                    self.input_button.configure(text="🖼️ Click here to select photos\nSelect multiple images")
+            elif mode == "pdf_merge":
+                if self.current_language == "nl":
+                    self.input_button.configure(text="📚 Klik hier om PDF's te selecteren\nSelecteer meerdere PDF bestanden")
+                else:
+                    self.input_button.configure(text="📚 Click here to select PDFs\nSelect multiple PDF files")
+        
+        if hasattr(self, 'output_button'):
+            if mode == "pdf_to_image":
+                if self.current_language == "nl":
+                    self.output_button.configure(text="📁 Klik hier om output map te selecteren\nBestanden worden hier opgeslagen")
+                else:
+                    self.output_button.configure(text="📁 Click here to select output folder\nFiles will be saved here")
+            elif mode in ["image_to_pdf", "pdf_merge"]:
+                if self.current_language == "nl":
+                    self.output_button.configure(text="📄 Klik hier om output PDF te selecteren\nWaar moet het bestand worden opgeslagen?")
+                else:
+                    self.output_button.configure(text="📄 Click here to select output PDF\nWhere should the file be saved?")
+        
+        if hasattr(self, 'convert_button'):
+            if mode == "pdf_to_image":
+                if self.current_language == "nl":
+                    self.convert_button.configure(text="🚀 START CONVERSIE\nConverteer PDF naar foto's!")
+                else:
+                    self.convert_button.configure(text="🚀 START CONVERSION\nConvert PDF to photos!")
+            elif mode == "image_to_pdf":
+                if self.current_language == "nl":
+                    self.convert_button.configure(text="🚀 START CONVERSIE\nMaak PDF van foto's!")
+                else:
+                    self.convert_button.configure(text="🚀 START CONVERSION\nMake PDF from photos!")
+            elif mode == "pdf_merge":
+                if self.current_language == "nl":
+                    self.convert_button.configure(text="🚀 START CONVERSIE\nVoeg PDF's samen!")
+                else:
+                    self.convert_button.configure(text="🚀 START CONVERSION\nMerge PDFs together!")
+        
+        # Update preview
+        if hasattr(self, 'update_preview'):
+            self.update_preview()
     
     def setup_input_section(self, parent):
         """Moderne input sectie"""
@@ -305,16 +460,17 @@ class MakkelijkPdfApp:
         )
         self.input_label.pack(pady=(0, 15), padx=15)
         
-        # Modern button
+        # Modern button met instructies
         input_button = ctk.CTkButton(
             input_card,
-            text="Select PDF File",
+            text="📄 Klik hier om PDF te selecteren\nof sleep PDF hierheen",
             command=self.select_input_file,
-            height=45,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            height=60,
+            font=ctk.CTkFont(size=14, weight="bold"),
             corner_radius=12,
             fg_color=("#3498db", "#2980b9"),
-            hover_color=("#2980b9", "#1f618d")
+            hover_color=("#2980b9", "#1f618d"),
+            text_color=("#ffffff", "#ffffff")
         )
         input_button.pack(pady=(0, 15), padx=15, fill="x")
         self.input_button = input_button
@@ -347,16 +503,17 @@ class MakkelijkPdfApp:
         )
         self.output_label.pack(pady=(0, 15), padx=15)
         
-        # Modern button
+        # Modern button met instructies
         output_button = ctk.CTkButton(
             output_card,
-            text="Select Output Folder",
+            text="📁 Klik hier om output map te selecteren\nBestanden worden hier opgeslagen",
             command=self.select_output_folder,
-            height=45,
-            font=ctk.CTkFont(size=16, weight="bold"),
+            height=60,
+            font=ctk.CTkFont(size=14, weight="bold"),
             corner_radius=12,
             fg_color=("#e74c3c", "#c0392b"),
-            hover_color=("#c0392b", "#a93226")
+            hover_color=("#c0392b", "#a93226"),
+            text_color=("#ffffff", "#ffffff")
         )
         output_button.pack(pady=(0, 15), padx=15, fill="x")
         self.output_button = output_button
@@ -444,16 +601,17 @@ class MakkelijkPdfApp:
         actions_card = ctk.CTkFrame(parent, corner_radius=15, fg_color=("#ffffff", "#1a1f2e"))
         actions_card.pack(fill="x", padx=15, pady=(0, 15))
         
-        # Main convert button
+        # Main convert button - Verbeterde call-to-action
         self.convert_button = ctk.CTkButton(
             actions_card,
-            text="🚀 Start Conversion",
+            text="🚀 START CONVERSIE\nKlik hier om te beginnen!",
             command=self.start_conversion,
-            height=60,
-            font=ctk.CTkFont(size=20, weight="bold"),
+            height=70,
+            font=ctk.CTkFont(size=18, weight="bold"),
             corner_radius=15,
             fg_color=("#27ae60", "#229954"),
-            hover_color=("#229954", "#1e8449")
+            hover_color=("#229954", "#1e8449"),
+            text_color=("#ffffff", "#ffffff")
         )
         self.convert_button.pack(pady=20, padx=20, fill="x")
         
@@ -766,22 +924,61 @@ Klik 'Start Conversie' om te beginnen."""
                 else:
                     self.format_label.configure(text="Output Format:")
             
-            # Update knoppen en labels
+            # Update knoppen en labels - Dynamisch op basis van conversie mode
             if hasattr(self, 'input_button'):
                 if self.current_language == "nl":
-                    self.input_button.configure(text="Selecteer PDF Bestand")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.input_button.configure(text="📄 Klik hier om PDF te selecteren\nof sleep PDF hierheen")
+                    elif self.conversion_mode == "image_to_pdf":
+                        self.input_button.configure(text="🖼️ Klik hier om foto's te selecteren\nSelecteer meerdere afbeeldingen")
+                    elif self.conversion_mode == "pdf_merge":
+                        self.input_button.configure(text="📚 Klik hier om PDF's te selecteren\nSelecteer meerdere PDF bestanden")
                 else:
-                    self.input_button.configure(text="Select PDF File")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.input_button.configure(text="📄 Click here to select PDF\nor drag PDF here")
+                    elif self.conversion_mode == "image_to_pdf":
+                        self.input_button.configure(text="🖼️ Click here to select photos\nSelect multiple images")
+                    elif self.conversion_mode == "pdf_merge":
+                        self.input_button.configure(text="📚 Click here to select PDFs\nSelect multiple PDF files")
+            
             if hasattr(self, 'output_button'):
                 if self.current_language == "nl":
-                    self.output_button.configure(text="Selecteer Output Map")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.output_button.configure(text="📁 Klik hier om output map te selecteren\nBestanden worden hier opgeslagen")
+                    else:
+                        self.output_button.configure(text="📄 Klik hier om output PDF te selecteren\nWaar moet het bestand worden opgeslagen?")
                 else:
-                    self.output_button.configure(text="Select Output Folder")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.output_button.configure(text="📁 Click here to select output folder\nFiles will be saved here")
+                    else:
+                        self.output_button.configure(text="📄 Click here to select output PDF\nWhere should the file be saved?")
+            
             if hasattr(self, 'convert_button'):
                 if self.current_language == "nl":
-                    self.convert_button.configure(text="🚀 Start Conversie")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.convert_button.configure(text="🚀 START CONVERSIE\nConverteer PDF naar foto's!")
+                    elif self.conversion_mode == "image_to_pdf":
+                        self.convert_button.configure(text="🚀 START CONVERSIE\nMaak PDF van foto's!")
+                    elif self.conversion_mode == "pdf_merge":
+                        self.convert_button.configure(text="🚀 START CONVERSIE\nVoeg PDF's samen!")
                 else:
-                    self.convert_button.configure(text="🚀 Start Conversion")
+                    if self.conversion_mode == "pdf_to_image":
+                        self.convert_button.configure(text="🚀 START CONVERSION\nConvert PDF to photos!")
+                    elif self.conversion_mode == "image_to_pdf":
+                        self.convert_button.configure(text="🚀 START CONVERSION\nMake PDF from photos!")
+                    elif self.conversion_mode == "pdf_merge":
+                        self.convert_button.configure(text="🚀 START CONVERSION\nMerge PDFs together!")
+            
+            # Update conversie mode knoppen
+            if hasattr(self, 'pdf_to_image_btn'):
+                if self.current_language == "nl":
+                    self.pdf_to_image_btn.configure(text="📄 PDF → Afbeelding\nConverteer PDF naar foto's")
+                    self.image_to_pdf_btn.configure(text="🖼️ Afbeelding → PDF\nMaak PDF van foto's")
+                    self.pdf_merge_btn.configure(text="📚 PDF Samenvoegen\nVoeg PDF's samen")
+                else:
+                    self.pdf_to_image_btn.configure(text="📄 PDF → Image\nConvert PDF to photos")
+                    self.image_to_pdf_btn.configure(text="🖼️ Image → PDF\nMake PDF from photos")
+                    self.pdf_merge_btn.configure(text="📚 PDF Merge\nMerge PDFs together")
             
             # Update andere knoppen
             if hasattr(self, 'new_conversion_button'):
@@ -982,70 +1179,243 @@ Klik 'Start Conversie' om te beginnen."""
                 self.stats_labels["files"].configure(text=str(len(self.conversion_stats["files_created"])))
         
     def select_input_file(self):
-        """Selecteer input PDF bestand"""
-        file_path = filedialog.askopenfilename(
-            title="Selecteer PDF bestand",
-            filetypes=[("PDF bestanden", "*.pdf"), ("Alle bestanden", "*.*")]
-        )
+        """Selecteer input bestand op basis van conversie mode"""
+        if self.conversion_mode == "pdf_to_image":
+            file_path = filedialog.askopenfilename(
+                title="Selecteer PDF bestand",
+                filetypes=[("PDF bestanden", "*.pdf"), ("Alle bestanden", "*.*")]
+            )
+            if file_path:
+                self.input_file = file_path
+                filename = os.path.basename(file_path)
+                if hasattr(self, 'input_label'):
+                    self.input_label.configure(text=f"📄 {filename}")
+                
+                # Update preview
+                if hasattr(self, 'update_preview'):
+                    self.update_preview()
+                
+                # Update status
+                if hasattr(self, 'status_label'):
+                    if self.current_language == "nl":
+                        self.status_label.configure(text=f"PDF geselecteerd: {filename}")
+                    else:
+                        self.status_label.configure(text=f"PDF selected: {filename}")
         
-        if file_path:
-            self.input_file = file_path
-            filename = os.path.basename(file_path)
-            if hasattr(self, 'input_label'):
-                self.input_label.configure(text=f"📄 {filename}")
-            
-            # Update preview
-            if hasattr(self, 'update_preview'):
-                self.update_preview()
-            
-            # Update status
-            if hasattr(self, 'status_label'):
-                if self.current_language == "nl":
-                    self.status_label.configure(text="PDF bestand geselecteerd")
-                else:
-                    self.status_label.configure(text="PDF file selected")
+        elif self.conversion_mode == "image_to_pdf":
+            file_paths = filedialog.askopenfilenames(
+                title="Selecteer afbeeldingen",
+                filetypes=[
+                    ("Afbeeldingen", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"),
+                    ("JPEG bestanden", "*.jpg *.jpeg"),
+                    ("PNG bestanden", "*.png"),
+                    ("Alle bestanden", "*.*")
+                ]
+            )
+            if file_paths:
+                self.input_files = list(file_paths)
+                filename = f"{len(file_paths)} afbeeldingen"
+                if hasattr(self, 'input_label'):
+                    self.input_label.configure(text=f"🖼️ {filename}")
+                if hasattr(self, 'status_label'):
+                    if self.current_language == "nl":
+                        self.status_label.configure(text=f"Afbeeldingen geselecteerd: {filename}")
+                    else:
+                        self.status_label.configure(text=f"Images selected: {filename}")
+        
+        elif self.conversion_mode == "pdf_merge":
+            file_paths = filedialog.askopenfilenames(
+                title="Selecteer PDF's",
+                filetypes=[("PDF bestanden", "*.pdf"), ("Alle bestanden", "*.*")]
+            )
+            if file_paths:
+                self.input_files = list(file_paths)
+                filename = f"{len(file_paths)} PDF's"
+                if hasattr(self, 'input_label'):
+                    self.input_label.configure(text=f"📚 {filename}")
+                if hasattr(self, 'status_label'):
+                    if self.current_language == "nl":
+                        self.status_label.configure(text=f"PDF's geselecteerd: {filename}")
+                    else:
+                        self.status_label.configure(text=f"PDFs selected: {filename}")
             
     def select_output_folder(self):
-        """Selecteer output map"""
-        # Start in Downloads map als standaard
-        initial_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-        folder_path = filedialog.askdirectory(
-            title="Selecteer output map",
-            initialdir=initial_dir
-        )
-        
-        if folder_path:
-            self.output_folder = folder_path
-            if hasattr(self, 'output_label'):
-                self.output_label.configure(text=f"📁 {folder_path}")
+        """Selecteer output map of bestand op basis van conversie mode"""
+        if self.conversion_mode == "pdf_to_image":
+            # Start in Downloads map als standaard
+            initial_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+            folder_path = filedialog.askdirectory(
+                title="Selecteer output map",
+                initialdir=initial_dir
+            )
             
-            # Update status
-            if hasattr(self, 'status_label'):
-                if self.current_language == "nl":
-                    self.status_label.configure(text="Output map geselecteerd")
-                else:
-                    self.status_label.configure(text="Output folder selected")
+            if folder_path:
+                self.output_folder = folder_path
+                if hasattr(self, 'output_label'):
+                    self.output_label.configure(text=f"📁 {folder_path}")
+                
+                # Update status
+                if hasattr(self, 'status_label'):
+                    if self.current_language == "nl":
+                        self.status_label.configure(text="Output map geselecteerd")
+                    else:
+                        self.status_label.configure(text="Output folder selected")
+        
+        elif self.conversion_mode in ["image_to_pdf", "pdf_merge"]:
+            # Voor image_to_pdf en pdf_merge: selecteer output bestand
+            initial_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+            file_path = filedialog.asksaveasfilename(
+                title="Selecteer output PDF",
+                defaultextension=".pdf",
+                filetypes=[("PDF bestanden", "*.pdf"), ("Alle bestanden", "*.*")],
+                initialdir=initial_dir
+            )
+            
+            if file_path:
+                self.output_file = file_path
+                filename = os.path.basename(file_path)
+                if hasattr(self, 'output_label'):
+                    self.output_label.configure(text=f"📄 {filename}")
+                if hasattr(self, 'status_label'):
+                    if self.current_language == "nl":
+                        self.status_label.configure(text=f"Output PDF geselecteerd: {filename}")
+                    else:
+                        self.status_label.configure(text=f"Output PDF selected: {filename}")
             
     def start_conversion(self):
-        """Start de conversie in een aparte thread"""
-        if not self.input_file:
-            if self.current_language == "nl":
-                messagebox.showerror("Fout", "Selecteer eerst een PDF bestand!")
-            else:
-                messagebox.showerror("Error", "Please select a PDF file first!")
-            return
+        """Start de conversie in een aparte thread op basis van mode"""
+        # Check input based on mode
+        if self.conversion_mode == "pdf_to_image":
+            if not hasattr(self, 'input_file') or not self.input_file:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst een PDF bestand!")
+                else:
+                    messagebox.showerror("Error", "Please select a PDF file first!")
+                return
+                
+            if not hasattr(self, 'output_folder') or not self.output_folder:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst een output map!")
+                else:
+                    messagebox.showerror("Error", "Please select an output folder first!")
+                return
+                
+            # Start PDF to image conversion
+            thread = threading.Thread(target=self.convert_pdf_to_images_mode, args=(self.dpi_var.get() if self.dpi_var else "300", self.format_var.get() if self.format_var else "PNG"))
+            thread.daemon = True
+            thread.start()
             
-        if not self.output_folder:
-            if self.current_language == "nl":
-                messagebox.showerror("Fout", "Selecteer eerst een output map!")
-            else:
-                messagebox.showerror("Error", "Please select an output folder first!")
-            return
+        elif self.conversion_mode == "image_to_pdf":
+            if not hasattr(self, 'input_files') or not self.input_files:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst afbeeldingen!")
+                else:
+                    messagebox.showerror("Error", "Please select images first!")
+                return
+                
+            if not hasattr(self, 'output_file') or not self.output_file:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst een output PDF!")
+                else:
+                    messagebox.showerror("Error", "Please select an output PDF first!")
+                return
+                
+            # Start image to PDF conversion
+            thread = threading.Thread(target=self.convert_images_to_pdf_mode)
+            thread.daemon = True
+            thread.start()
             
-        # Start conversie in aparte thread
-        thread = threading.Thread(target=self.convert_pdf, args=(self.dpi_var.get() if self.dpi_var else "300", self.format_var.get() if self.format_var else "PNG"))
-        thread.daemon = True
-        thread.start()
+        elif self.conversion_mode == "pdf_merge":
+            if not hasattr(self, 'input_files') or not self.input_files:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst PDF's!")
+                else:
+                    messagebox.showerror("Error", "Please select PDFs first!")
+                return
+                
+            if not hasattr(self, 'output_file') or not self.output_file:
+                if self.current_language == "nl":
+                    messagebox.showerror("Fout", "Selecteer eerst een output PDF!")
+                else:
+                    messagebox.showerror("Error", "Please select an output PDF first!")
+                return
+                
+            # Start PDF merge
+            thread = threading.Thread(target=self.merge_pdfs_mode)
+            thread.daemon = True
+            thread.start()
+    
+    def convert_images_to_pdf_mode(self):
+        """Converteer afbeeldingen naar PDF"""
+        try:
+            self.convert_button.configure(state="disabled")
+            if self.current_language == "nl":
+                self.status_label.configure(text="Afbeeldingen worden geconverteerd naar PDF...")
+            else:
+                self.status_label.configure(text="Converting images to PDF...")
+            
+            images = []
+            for path in self.input_files:
+                img = Image.open(path)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                images.append(img)
+            
+            # Sla op als PDF
+            if images:
+                images[0].save(self.output_file, "PDF", resolution=300.0, save_all=True, append_images=images[1:])
+            
+            self.convert_button.configure(state="normal")
+            if self.current_language == "nl":
+                self.status_label.configure(text="✅ Conversie voltooid!")
+                messagebox.showinfo("Succes", f"{len(images)} afbeeldingen succesvol geconverteerd naar PDF!")
+            else:
+                self.status_label.configure(text="✅ Conversion complete!")
+                messagebox.showinfo("Success", f"{len(images)} images successfully converted to PDF!")
+            
+        except Exception as e:
+            self.convert_button.configure(state="normal")
+            error_msg = str(e)
+            if self.current_language == "nl":
+                self.status_label.configure(text="❌ Conversie gefaald")
+                messagebox.showerror("Fout", f"Conversie gefaald: {error_msg}")
+            else:
+                self.status_label.configure(text="❌ Conversion failed")
+                messagebox.showerror("Error", f"Conversion failed: {error_msg}")
+    
+    def merge_pdfs_mode(self):
+        """Voeg meerdere PDF's samen"""
+        try:
+            self.convert_button.configure(state="disabled")
+            if self.current_language == "nl":
+                self.status_label.configure(text="PDF's worden samengevoegd...")
+            else:
+                self.status_label.configure(text="Merging PDFs...")
+            
+            merger = PyPDF2.PdfMerger()
+            for path in self.input_files:
+                merger.append(path)
+            
+            merger.write(self.output_file)
+            merger.close()
+            
+            self.convert_button.configure(state="normal")
+            if self.current_language == "nl":
+                self.status_label.configure(text="✅ Conversie voltooid!")
+                messagebox.showinfo("Succes", f"{len(self.input_files)} PDF's succesvol samengevoegd!")
+            else:
+                self.status_label.configure(text="✅ Conversion complete!")
+                messagebox.showinfo("Success", f"{len(self.input_files)} PDFs successfully merged!")
+            
+        except Exception as e:
+            self.convert_button.configure(state="normal")
+            error_msg = str(e)
+            if self.current_language == "nl":
+                self.status_label.configure(text="❌ Conversie gefaald")
+                messagebox.showerror("Fout", f"Conversie gefaald: {error_msg}")
+            else:
+                self.status_label.configure(text="❌ Conversion failed")
+                messagebox.showerror("Error", f"Conversion failed: {error_msg}")
         
     def convert_pdf(self, dpi_value="300", format_value="PNG"):
         """Converteer PDF naar afbeeldingen"""
