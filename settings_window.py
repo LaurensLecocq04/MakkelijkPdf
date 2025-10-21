@@ -8,9 +8,10 @@ from settings import SettingsManager
 import os
 
 class SettingsWindow:
-    def __init__(self, parent, settings_manager):
+    def __init__(self, parent, settings_manager, on_close_callback=None):
         self.parent = parent
         self.settings = settings_manager
+        self.on_close_callback = on_close_callback
         self.window = None
         
     def show(self):
@@ -27,6 +28,9 @@ class SettingsWindow:
         # Maak venster modal
         self.window.transient(self.parent)
         self.window.grab_set()
+        
+        # Voeg close handler toe
+        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         self.setup_ui()
         
@@ -129,7 +133,7 @@ class SettingsWindow:
         language_menu = ctk.CTkOptionMenu(
             language_frame,
             variable=self.language_var,
-            values=["nl", "en", "fr", "de"]
+            values=["nl", "en"]
         )
         language_menu.pack(side="left", padx=10, pady=10)
         
@@ -337,12 +341,28 @@ class SettingsWindow:
         )
         temp_button.pack(side="right", padx=5, pady=10)
         
+    def on_closing(self):
+        """Handler voor venster sluiten"""
+        # Sla alle instellingen op
+        self.save_settings()
+        
+        # Pas thema toe als het is gewijzigd
+        new_theme = self.theme_var.get()
+        if new_theme != ctk.get_appearance_mode():
+            ctk.set_appearance_mode(new_theme)
+        
+        # Sluit venster
+        self.window.destroy()
+        self.window = None
+        
+        # Roep callback aan als die bestaat
+        if self.on_close_callback:
+            self.on_close_callback()
+    
     def on_theme_change(self, theme):
         """Thema wijziging handler"""
-        ctk.set_appearance_mode(theme)
-        # Update parent venster ook
-        if hasattr(self.parent, 'settings'):
-            self.parent.settings.set("general", "theme", theme)
+        # Alleen opslaan, niet direct toepassen
+        self.settings.set("general", "theme", theme)
         
     def browse_temp_folder(self):
         """Blader naar temp map"""

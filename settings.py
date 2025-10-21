@@ -66,6 +66,17 @@ class SettingsManager:
             print(f"Fout bij opslaan instellingen: {e}")
             return False
     
+    def reload(self):
+        """Herlaad instellingen uit bestand"""
+        try:
+            if self.settings_file.exists():
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    loaded_settings = json.load(f)
+                # Merge met default settings
+                self.settings = self._merge_settings(self.default_settings, loaded_settings)
+        except Exception as e:
+            print(f"Fout bij herladen instellingen: {e}")
+    
     def get(self, section, key, default=None):
         """Haal instelling op"""
         return self.settings.get(section, {}).get(key, default)

@@ -16,6 +16,7 @@ from datetime import datetime
 from version import get_version_string, get_version_info, check_for_updates
 from settings import SettingsManager
 from settings_window import SettingsWindow
+from languages import get_text, get_available_languages, get_language_name
 
 # Voeg poppler pad toe aan PATH (cross-platform)
 import platform
@@ -37,6 +38,9 @@ class MakkelijkPdfApp:
     def __init__(self):
         # Laad instellingen
         self.settings = SettingsManager()
+        
+        # Stel taal in
+        self.current_language = self.settings.get("general", "language", "nl")
         
         # Configureer CustomTkinter
         theme = self.settings.get("general", "theme", "system")
@@ -131,6 +135,17 @@ class MakkelijkPdfApp:
         )
         self.theme_button.pack(side="right", padx=5, pady=2)
         
+        # Taal wissel knop
+        language_icon = "🇬🇧" if self.current_language == "nl" else "🇳🇱"
+        self.language_button = ctk.CTkButton(
+            menubar,
+            text=language_icon,
+            command=self.toggle_language,
+            width=30,
+            height=25
+        )
+        self.language_button.pack(side="right", padx=5, pady=2)
+        
     def setup_ui(self):
         """Zet de gebruikersinterface op"""
         # Hoofdframe
@@ -147,6 +162,7 @@ class MakkelijkPdfApp:
             font=ctk.CTkFont(size=24, weight="bold")
         )
         title_label.pack(pady=10)
+        self.title_label = title_label
         
         subtitle_label = ctk.CTkLabel(
             title_frame, 
@@ -154,6 +170,7 @@ class MakkelijkPdfApp:
             font=ctk.CTkFont(size=12)
         )
         subtitle_label.pack(pady=(0, 10))
+        self.subtitle_label = subtitle_label
         
         # Hoofdcontent frame (2 kolommen)
         content_frame = ctk.CTkFrame(main_frame)
@@ -171,7 +188,9 @@ class MakkelijkPdfApp:
         input_frame = ctk.CTkFrame(left_frame)
         input_frame.pack(fill="x", padx=10, pady=10)
         
-        ctk.CTkLabel(input_frame, text="PDF Bestand:", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=(10, 5))
+        pdf_label = ctk.CTkLabel(input_frame, text="PDF Bestand:", font=ctk.CTkFont(weight="bold"))
+        pdf_label.pack(anchor="w", padx=10, pady=(10, 5))
+        self.pdf_label = pdf_label
         
         self.input_label = ctk.CTkLabel(input_frame, text="Geen bestand geselecteerd", text_color="gray")
         self.input_label.pack(anchor="w", padx=10, pady=(0, 5))
@@ -182,12 +201,15 @@ class MakkelijkPdfApp:
             command=self.select_input_file
         )
         input_button.pack(anchor="w", padx=10, pady=(0, 10))
+        self.input_button = input_button
         
         # Output folder sectie
         output_frame = ctk.CTkFrame(left_frame)
         output_frame.pack(fill="x", padx=10, pady=10)
         
-        ctk.CTkLabel(output_frame, text="Output Map:", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=(10, 5))
+        output_label_title = ctk.CTkLabel(output_frame, text="Output Map:", font=ctk.CTkFont(weight="bold"))
+        output_label_title.pack(anchor="w", padx=10, pady=(10, 5))
+        self.output_label_title = output_label_title
         
         # Toon standaard Downloads map
         downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
@@ -200,28 +222,42 @@ class MakkelijkPdfApp:
             command=self.select_output_folder
         )
         output_button.pack(anchor="w", padx=10, pady=(0, 10))
+        self.output_button = output_button
         
         # Conversie opties
         options_frame = ctk.CTkFrame(left_frame)
         options_frame.pack(fill="x", padx=10, pady=10)
         
-        ctk.CTkLabel(options_frame, text="Conversie Opties:", font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=10, pady=(10, 5))
+        options_label = ctk.CTkLabel(options_frame, text="Conversie Opties:", font=ctk.CTkFont(weight="bold"))
+        options_label.pack(anchor="w", padx=10, pady=(10, 5))
+        self.options_label = options_label
         
         # DPI instelling
         dpi_frame = ctk.CTkFrame(options_frame)
         dpi_frame.pack(fill="x", padx=10, pady=5)
         
-        ctk.CTkLabel(dpi_frame, text="DPI (kwaliteit):").pack(side="left", padx=10, pady=10)
+        dpi_label = ctk.CTkLabel(dpi_frame, text="DPI (kwaliteit):")
+        dpi_label.pack(side="left", padx=10, pady=10)
+        self.dpi_label = dpi_label
+        
         default_dpi = self.settings.get("conversion", "default_dpi", 300)
         self.dpi_var = ctk.StringVar(value=str(default_dpi))
-        dpi_entry = ctk.CTkEntry(dpi_frame, textvariable=self.dpi_var, width=100)
-        dpi_entry.pack(side="left", padx=10, pady=10)
+        dpi_menu = ctk.CTkOptionMenu(
+            dpi_frame,
+            variable=self.dpi_var,
+            values=["150", "200", "300", "400", "600"],
+            width=100
+        )
+        dpi_menu.pack(side="left", padx=10, pady=10)
+        self.dpi_menu = dpi_menu
         
         # Formaat selectie
         format_frame = ctk.CTkFrame(options_frame)
         format_frame.pack(fill="x", padx=10, pady=5)
         
-        ctk.CTkLabel(format_frame, text="Output Formaat:").pack(side="left", padx=10, pady=10)
+        format_label = ctk.CTkLabel(format_frame, text="Output Formaat:")
+        format_label.pack(side="left", padx=10, pady=10)
+        self.format_label = format_label
         default_format = self.settings.get("conversion", "default_format", "PNG")
         self.format_var = ctk.StringVar(value=default_format)
         format_menu = ctk.CTkOptionMenu(
@@ -344,7 +380,9 @@ Klik 'Start Conversie' om te beginnen."""
         stats_frame = ctk.CTkFrame(parent)
         stats_frame.pack(fill="x", padx=10, pady=10)
         
-        ctk.CTkLabel(stats_frame, text="Statistieken", font=ctk.CTkFont(weight="bold")).pack(pady=10)
+        stats_title = ctk.CTkLabel(stats_frame, text="Statistieken", font=ctk.CTkFont(weight="bold"))
+        stats_title.pack(pady=10)
+        self.stats_title = stats_title
         
         # Stats labels
         self.stats_labels = {}
@@ -359,9 +397,13 @@ Klik 'Start Conversie' om te beginnen."""
             frame = ctk.CTkFrame(stats_frame)
             frame.pack(fill="x", padx=10, pady=2)
             
-            ctk.CTkLabel(frame, text=label_text).pack(side="left", padx=5)
-            self.stats_labels[key] = ctk.CTkLabel(frame, text="0")
-            self.stats_labels[key].pack(side="right", padx=5)
+            label = ctk.CTkLabel(frame, text=label_text)
+            label.pack(side="left", padx=5)
+            self.stats_labels[key] = label
+            
+            value_label = ctk.CTkLabel(frame, text="0")
+            value_label.pack(side="right", padx=5)
+            self.stats_labels[f"{key}_value"] = value_label
     
     def show_file_menu(self):
         """Toon bestand menu"""
@@ -394,33 +436,62 @@ Klik 'Start Conversie' om te beginnen."""
     def show_settings(self):
         """Toon instellingen venster"""
         if self.settings_window is None:
-            self.settings_window = SettingsWindow(self.root, self.settings)
+            self.settings_window = SettingsWindow(self.root, self.settings, self.on_settings_closed)
         self.settings_window.show()
+    
+    def on_settings_closed(self):
+        """Callback wanneer instellingen venster wordt gesloten"""
+        # Herlaad instellingen
+        self.settings.reload()
+        
+        # Update huidige taal en thema
+        self.current_language = self.settings.get("general", "language", "nl")
+        current_theme = self.settings.get("general", "theme", "system")
+        
+        # Pas thema toe
+        ctk.set_appearance_mode(current_theme)
+        
+        # Update thema knop icoon
+        if hasattr(self, 'theme_button'):
+            if current_theme == "light":
+                self.theme_button.configure(text="🌙")
+            elif current_theme == "dark":
+                self.theme_button.configure(text="☀️")
+            else:  # system
+                self.theme_button.configure(text="🌙")
+        
+        # Update taal knop icoon
+        if hasattr(self, 'language_button'):
+            if self.current_language == "nl":
+                self.language_button.configure(text="🇬🇧")
+            else:
+                self.language_button.configure(text="🇳🇱")
+        
+        # Update venster titel
+        version_string = get_version_string()
+        self.root.title(f"{get_text('app_title', self.current_language)} v{version_string}")
+        
+        # Update status
+        self.status_label.configure(text="Instellingen bijgewerkt")
+        
+        # Reset settings window reference
+        self.settings_window = None
     
     def toggle_theme(self):
         """Wissel tussen licht en donker thema"""
         # Haal huidige thema op uit instellingen (betrouwbaarder)
         current_theme = self.settings.get("general", "theme", "system")
         
-        # Debug info
-        print(f"Huidige thema uit instellingen: {current_theme}")
-        print(f"Huidige thema uit CTK: {ctk.get_appearance_mode()}")
-        
         # Bepaal nieuw thema op basis van huidige instelling
         if current_theme == "light":
             new_theme = "dark"
             new_icon = "☀️"
-            print("Switching van light naar dark")
         elif current_theme == "dark":
             new_theme = "light"
             new_icon = "🌙"
-            print("Switching van dark naar light")
         else:  # system of onbekend
             new_theme = "dark"
             new_icon = "☀️"
-            print("Switching van system naar dark")
-        
-        print(f"Nieuw thema: {new_theme}, Nieuw icoon: {new_icon}")
         
         # Pas thema toe
         ctk.set_appearance_mode(new_theme)
@@ -430,24 +501,185 @@ Klik 'Start Conversie' om te beginnen."""
         self.theme_button.configure(text=new_icon)
         
         # Toon bevestiging
-        self.status_label.configure(text=f"Thema gewijzigd naar {new_theme}")
+        self.status_label.configure(text=f"{get_text('theme', self.current_language)} gewijzigd naar {new_theme}")
         
-        # Probeer widgets te updaten
+        # Forceer volledige UI update
+        self.update_theme_colors()
+        
+        # Toon bericht
+        messagebox.showinfo(
+            f"{get_text('theme', self.current_language)} Gewijzigd", 
+            f"{get_text('theme', self.current_language)} is gewijzigd naar {new_theme}.\n\n"
+            "De wijziging is direct zichtbaar!"
+        )
+    
+    def toggle_language(self):
+        """Wissel tussen Nederlands en Engels"""
+        # Bepaal nieuwe taal
+        if self.current_language == "nl":
+            new_language = "en"
+            new_icon = "🇳🇱"
+        else:
+            new_language = "nl"
+            new_icon = "🇬🇧"
+        
+        # Sla nieuwe taal op
+        self.current_language = new_language
+        self.settings.set("general", "language", new_language)
+        
+        # Update knop icoon
+        self.language_button.configure(text=new_icon)
+        
+        # Update UI teksten direct
+        self.update_ui_language()
+        
+        # Toon bevestiging
+        if self.current_language == "nl":
+            self.status_label.configure(text=f"{get_text('language', self.current_language)} gewijzigd naar {get_language_name(self.current_language)}")
+        else:
+            self.status_label.configure(text=f"{get_text('language', self.current_language)} changed to {get_language_name(self.current_language)}")
+        
+        # Toon bericht
+        if self.current_language == "nl":
+            messagebox.showinfo(
+                f"{get_text('language', self.current_language)} Gewijzigd", 
+                f"{get_text('language', self.current_language)} is gewijzigd naar {get_language_name(self.current_language)}.\n\n"
+                "De wijziging is direct zichtbaar!"
+            )
+        else:
+            messagebox.showinfo(
+                f"{get_text('language', self.current_language)} Changed", 
+                f"{get_text('language', self.current_language)} changed to {get_language_name(self.current_language)}.\n\n"
+                "The change is immediately visible!"
+            )
+    
+    def update_ui_language(self):
+        """Update alle UI teksten naar de huidige taal"""
         try:
+            # Update venster titel
+            version_string = get_version_string()
+            self.root.title(f"{get_text('app_title', self.current_language)} v{version_string}")
+            
+            # Update titel en subtitle
+            if hasattr(self, 'title_label'):
+                self.title_label.configure(text="MakkelijkPdf")
+            if hasattr(self, 'subtitle_label'):
+                self.subtitle_label.configure(text="Converteer PDF bestanden naar afbeeldingen" if self.current_language == "nl" else "Convert PDF files to images")
+            
+            # Update sectie labels
+            if hasattr(self, 'pdf_label'):
+                self.pdf_label.configure(text="PDF Bestand:" if self.current_language == "nl" else "PDF File:")
+            if hasattr(self, 'output_label_title'):
+                self.output_label_title.configure(text="Output Map:" if self.current_language == "nl" else "Output Folder:")
+            if hasattr(self, 'options_label'):
+                self.options_label.configure(text="Conversie Opties:" if self.current_language == "nl" else "Conversion Options:")
+            if hasattr(self, 'dpi_label'):
+                self.dpi_label.configure(text="DPI (kwaliteit):" if self.current_language == "nl" else "DPI (quality):")
+            if hasattr(self, 'format_label'):
+                self.format_label.configure(text="Output Formaat:" if self.current_language == "nl" else "Output Format:")
+            
+            # Update knoppen en labels
+            if hasattr(self, 'input_button'):
+                self.input_button.configure(text=get_text('select_pdf', self.current_language))
+            if hasattr(self, 'output_button'):
+                self.output_button.configure(text=get_text('select_output', self.current_language))
+            if hasattr(self, 'convert_button'):
+                self.convert_button.configure(text=get_text('convert', self.current_language))
+            
+            # Update andere knoppen
+            if hasattr(self, 'new_conversion_button'):
+                self.new_conversion_button.configure(text=get_text('new_conversion', self.current_language))
+            
+            # Update preview en stats labels
+            if hasattr(self, 'preview_label'):
+                self.preview_label.configure(text=get_text('preview', self.current_language))
+            if hasattr(self, 'stats_label'):
+                self.stats_label.configure(text=get_text('statistics', self.current_language))
+            
+            # Update statistieken titel en labels
+            if hasattr(self, 'stats_title'):
+                self.stats_title.configure(text="Statistieken" if self.current_language == "nl" else "Statistics")
+            
+            # Update statistieken labels
+            if hasattr(self, 'stats_labels'):
+                stats_translations = {
+                    "pages": "Pagina's:" if self.current_language == "nl" else "Pages:",
+                    "time": "Tijd:" if self.current_language == "nl" else "Time:",
+                    "size": "Bestandsgrootte:" if self.current_language == "nl" else "File Size:",
+                    "files": "Bestanden:" if self.current_language == "nl" else "Files:"
+                }
+                
+                for key, translation in stats_translations.items():
+                    if key in self.stats_labels:
+                        self.stats_labels[key].configure(text=translation)
+            
+            # Update input label
+            if hasattr(self, 'input_label'):
+                if self.input_file:
+                    self.input_label.configure(text=f"📄 {os.path.basename(self.input_file)}")
+                else:
+                    self.input_label.configure(text="Geen bestand geselecteerd" if self.current_language == "nl" else "No file selected")
+            
+            # Update output label
+            if hasattr(self, 'output_label'):
+                downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
+                self.output_label.configure(text=f"📁 {downloads_path}")
+            
+            # Update status
+            self.status_label.configure(text="Klaar voor conversie" if self.current_language == "nl" else "Ready for conversion")
+            
+        except Exception as e:
+            print(f"Fout bij updaten UI taal: {e}")
+    
+    def restart_application(self):
+        """Herstart de applicatie"""
+        import sys
+        import os
+        import subprocess
+        
+        # Sluit huidige venster
+        self.root.destroy()
+        
+        # Start nieuwe instantie
+        python = sys.executable
+        try:
+            subprocess.Popen([python, sys.argv[0]])
+        except Exception as e:
+            print(f"Fout bij herstarten: {e}")
+            # Fallback: probeer os.execl
+            os.execl(python, python, *sys.argv)
+    
+    def update_theme_colors(self):
+        """Update alle UI kleuren voor het nieuwe thema"""
+        try:
+            # Forceer volledige UI refresh
             self.root.update()
             self.root.update_idletasks()
-        except:
+            
+            # Update venster titel
+            version_string = get_version_string()
+            self.root.title(f"{get_text('app_title', self.current_language)} v{version_string}")
+            
+            # Update alle widgets recursief
+            self.update_widget_colors(self.root)
+                        
+        except Exception as e:
+            print(f"Thema update fout: {e}")
+            # Als er een fout is, gewoon doorgaan
+    
+    def update_widget_colors(self, widget):
+        """Update kleuren van widget en alle kinderen"""
+        try:
+            # Update huidige widget
+            if hasattr(widget, 'configure'):
+                widget.update()
+            
+            # Update alle kinderen
+            for child in widget.winfo_children():
+                self.update_widget_colors(child)
+                
+        except Exception:
             pass
-        
-        # Toon bericht over herstart
-        messagebox.showinfo(
-            "Thema Gewijzigd", 
-            f"Thema is gewijzigd naar {new_theme}.\n\n"
-            "Voor volledige wijziging:\n"
-            "1. Sluit de applicatie\n"
-            "2. Start opnieuw\n\n"
-            "Of gebruik het Instellingen venster voor meer opties."
-        )
     
     def new_conversion(self):
         """Start nieuwe conversie"""
